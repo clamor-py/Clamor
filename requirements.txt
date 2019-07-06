@@ -1,0 +1,8 @@
+# Compatibility layer for asyncio, trio and curio; Required for underlying I/O
+anyio==1.0.0
+
+## HTTP library based on anyio; Required for requests to the Discord REST API
+asks>=2.3.5
+
+# WebSocket library based on anyio; Required for connections to the Discord gateways
+anysocks>=0.1.2

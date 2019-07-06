@@ -1,0 +1,6 @@
+recursive-include clamor *.py
+recursive-include docs *
+recursive-include tests *.py
+include CODE_OF_CONDUCT.md CONTRIBUTING.md
+include README.rst
+include requirements.txt

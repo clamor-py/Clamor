@@ -1,0 +1,4 @@
+# https://pyup.io/ configuration file
+
+update: all
+label_prs: dependency update

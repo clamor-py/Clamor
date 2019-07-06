@@ -1,0 +1,5 @@
+# Handle default line endings
+* text=auto eol=lf
+*.bat eol=crlf
+*.png binary
+*.ico binary

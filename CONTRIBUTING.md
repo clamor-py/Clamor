@@ -50,6 +50,63 @@ releases when we think it is appropriate to do so.
 After your PR has passed all checks, Continuous Integration and has been approved by the maintainers,
 it'll be merged.
 
+## Code guidelines
+
+- Code in general should follow [PEP 7 standards for C code](https://www.python.org/dev/peps/pep-0008/) and
+[PEP 8 standards for Python code](https://www.python.org/dev/peps/pep-0008/).
+
+- Before committing, please lint your code by running `pylama .` and resolving the issues.
+This helps everyone to keep the code overall consistent, easy to read and maintainable.
+
+- Python source files are meant to start with `# -*- coding: utf-8 -*-`, followed by an empty line.
+
+- Please follow the way we structure `include` statements.
+
+```python
+# Imports are to be arranged alphabetically
+
+# Imports from the standard library
+import audioop as audio
+import os.path
+import re
+# followed by from ... include ... statements from the standard library
+from json import dumps
+
+# Imports from external dependencies
+import anyio
+from anysocks import open_connection
+from asks import Session
+
+# Imports from Clamor itself
+from .meta import __version__ as version
+```
+
+- Please use expressive variable and function names. They should give users
+a clear understanding of what they are supposed to do.
+
+```python
+# Good:
+heartbeat_interval = payload['hearbeat_interval']
+
+# Bad:
+# What is xyz supposed to do? Why 5? What is it used for?
+xyz = 5
+```
+
+- Keep your code readable, self-explanatory and clean. If you're adding
+new source files or expand existing ones, don't forget to add corresponding
+unit tests to the `tests/` directory.
+
+- Documentation is important for users to give them a clear overview of the
+public API of this library. Attributes, functions, and methods starting with
+an underscore (`_`) are generally meant to be part of the private API and
+therefore doesn't need documentation. Please refer to the
+[NumPy docstring style guide](https://numpydoc.readthedocs.io/en/latest/format.html)
+or documented source code.
+
+- Keep it usable. No fast-and-loose JSON dicts, manual HTTP requests or gateway
+messages that aren't wrapped.
+
 ## Contribution ideas
 
 There are many ways of contributing. If there is no [open issue][issues] that arouses your interest, here

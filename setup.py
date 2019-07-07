@@ -30,7 +30,7 @@ setup(
     url='https://github.com/clamor-py/Clamor',
     license='MIT',
     description='The Python Discord API Framework',
-    ling_description=README,
+    long_description=README,
     long_description_content_type='text/x-rst',
     project_urls={
         'Documentation': 'https://clamor.readthedocs.io/en/latest',

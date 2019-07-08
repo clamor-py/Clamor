@@ -1,14 +1,30 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from enum import IntEnum
+from itertools import starmap
+from typing import Optional
+
+from asks.response_objects import Response
+
+__all__ = (
+    'JSONErrorCodes',
+    'ClamorError',
+    'RequestFailed',
+    'Unauthorized',
+    'Forbidden',
+    'NotFound',
+    'Hierarchied',
+)
+
+logger = logging.getLogger(__name__)
 
 
-class ErrorCodes(IntEnum):
-    #: Unknown status code.
-    UNKNOWN = -1
+class JSONErrorCodes(IntEnum):
+    """Enum that holds the REST API JSON error codes."""
 
-    #: Internal server error.
-    SERVER_ERROR = 0
+    #: Unknown opcode.
+    UNKNOWN = 0
 
     #: Unknown account.
     UNKNOWN_ACCOUNT = 10001
@@ -123,3 +139,144 @@ class ErrorCodes(IntEnum):
 
     #: Resource overloaded.
     RESOURCE_OVERLOADED = 130000
+
+
+class ClamorError(Exception):
+    """Base exception class for any exceptions raised by this library.
+
+    Therefore, catching :class:`~clamor.exceptions.ClamorException` may
+    be used to handle **any** exceptions raised by this library.
+    """
+    pass
+
+
+class RequestFailed(ClamorError):
+    """Exception that will be raised for failed HTTP requests to the REST API.
+
+    This extracts important components from the failed response
+    and presents them to the user in a readable way.
+
+    Parameters
+    ----------
+    response : :class:`Response<asks:asks.response_objects.Response>`
+        The response for the failed request.
+    data : Optional[dict, str]
+        The parsed response body.
+
+    Attributes
+    ----------
+    response : :class:`Response<asks:asks.response_objects.Response>`
+        The response for the failed request.
+    status_code : int
+        The HTTP status code for the request.
+    bucket : Tuple[str, str]
+        A tuple containing request method and URL for debugging purposes.
+    error_code : :class:`~clamor.exceptions.JSONErrorCodes`
+        The JSON error code returned by the API.
+    errors : dict
+        The unflattened JSON error dict.
+    message : str
+        The error message returned by the API.
+    """
+
+    def __init__(self, response: Response, data: Optional[dict, str]):
+        self.response = response
+        self.status_code = response.status_code
+        self.bucket = (self.response.method.upper(), self.response.url)
+
+        self.error_code = None
+        self.errors = None
+        self.message = None
+
+        failed = 'Request to {0.bucket} failed with {0.error_code} (0.error_code.name): {0.message}'
+
+        # Try to get any useful data from the dict
+        error_code = data.get('code', 0)
+        if isinstance(data, dict):
+            try:
+                self.error_code = JSONErrorCodes(error_code)
+            except ValueError:
+                logger.warning('Unknown error code %d', error_code)
+                self.error_code = JSONErrorCodes.UNKNOWN
+
+            self.errors = data.get('errors', {})
+            self.message = data.get('message', '')
+
+        else:
+            self.message = data
+            self.status_code = JSONErrorCodes.UNKNOWN
+
+        if self.errors:
+            errors = self._flatten_errors(self.errors)
+            error_list = '\n'.join(starmap('{}: {}'.format, errors.items()))
+            failed += '\n{}'.format(error_list)
+
+        super().__init__(failed.format(self))
+
+    def _flatten_errors(self, errors: dict, key: str = ''):
+        messages = []
+
+        for k, v in errors.items():
+            if k == 'message':
+                continue
+
+            new_key = k
+            if key:
+                if key.isdigit():
+                    new_key = '{}.{}'.format(key, k)
+                else:
+                    new_key = '{}.[{}]'.format(key, k)
+
+            try:
+                _errors = v['_errors']
+            except KeyError:
+                messages.extend(self._flatten_errors(v, new_key).items())
+            else:
+                messages.append((new_key, ' '.join(error.get('message', '') for error in _errors)))
+
+        return dict(messages)
+
+
+class Unauthorized(RequestFailed):
+    """Raised for HTTP status code ``401: Unauthorized``.
+
+    Essentially denoting that the user's token is wrong.
+    """
+    pass
+
+
+class Forbidden(RequestFailed):
+    """Raised for HTTP status code ``403: Forbidden``.
+
+    Essentially denoting that your token is not permitted
+    to access a specific resource.
+    """
+    pass
+
+
+class NotFound(RequestFailed):
+    """Raised for HTTP status code ``404: Not Found``.
+
+    Essentially denoting that the specified resource
+    does not exist.
+    """
+    pass
+
+
+class Hierarchied(ClamorError):
+    """Raised when an action fails due to hierarchy.
+
+    This error is occurring when your bot tries to
+    edit someone with a higher role than their own
+    regardless of permissions.
+
+    Common examples:
+    ----------------
+
+    - The bot is trying to edit the guild owner.
+
+    - The bot is trying to kick/ban members with
+      a higher role than their own.
+      *Even occurs if the bot has ``Kick/Ban Members``.*
+    """
+    pass

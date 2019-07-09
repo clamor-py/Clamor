@@ -47,7 +47,7 @@ class HTTP:
                 The necessary keys and values to dynamically format the route.
            headers : dict, optional
                 The headers to use for the request.
-           retires : int, optional
+           retries : int, optional
                 The amount of retires that have been made yet.
 
            Returns

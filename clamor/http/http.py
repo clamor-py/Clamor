@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import clamor
-# RequestFailed executes an error on importing it. Please look after it..
-# from clamor.exceptions import RequestFailed
+from clamor.exceptions import RequestFailed
 
 import logging
 import sys
@@ -94,15 +93,13 @@ class HTTP:
         elif status != 429 and 400 <= status < 500:
             # These status codes are only caused by the user and won't disappear with another request.
             # It'd be just a waste of performance to attempt sending another request.
-            raise Exception('Something went wrong..\nData: ' + data)  # TODO change Exception
-            # raise RequestFailed(response, data)
+            raise RequestFailed(response, data)
 
         else:
             # Something happened wrong... Let's try that again.
             retries += 1
             if retries > self.MAX_RETRIES:
-                raise Exception('Something went wrong..\nData: ' + data)  # TODO change Exception
-                # raise RequestFailed(response, data)
+                raise RequestFailed(response, data)
 
             retrying = randint(100, 50000) / 1000.0
             logger.debug(self.LOG_FAILED.format(bucket=bucket, code=status, error=response.content, seconds=retrying))

@@ -3,7 +3,7 @@
 import logging
 from enum import IntEnum
 from itertools import starmap
-from typing import Optional
+from typing import Optional, Union
 
 from asks.response_objects import Response
 
@@ -179,7 +179,7 @@ class RequestFailed(ClamorError):
         The error message returned by the API.
     """
 
-    def __init__(self, response: Response, data: Optional[dict, str]):
+    def __init__(self, response: Response, data: Optional[Union[dict, str]]):
         self.response = response
         self.status_code = response.status_code
         self.bucket = (self.response.method.upper(), self.response.url)

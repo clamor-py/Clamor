@@ -140,6 +140,10 @@ class JSONErrorCodes(IntEnum):
     #: Resource overloaded.
     RESOURCE_OVERLOADED = 130000
 
+    @property
+    def name(self):
+        return ' '.join(part.capitalize() for part in self._name_.split('_'))
+
 
 class ClamorError(Exception):
     """Base exception class for any exceptions raised by this library.
@@ -171,7 +175,7 @@ class RequestFailed(ClamorError):
         The HTTP status code for the request.
     bucket : Tuple[str, str]
         A tuple containing request method and URL for debugging purposes.
-    error_code : :class:`~clamor.exceptions.JSONErrorCodes`
+    error : :class:`~clamor.exceptions.JSONErrorCodes`
         The JSON error code returned by the API.
     errors : dict
         The unflattened JSON error dict.
@@ -184,20 +188,20 @@ class RequestFailed(ClamorError):
         self.status_code = response.status_code
         self.bucket = (self.response.method.upper(), self.response.url)
 
-        self.error_code = None
+        self.error = None
         self.errors = None
         self.message = None
 
-        failed = 'Request to {0.bucket} failed with {0.error_code} (0.error_code.name): {0.message}'
+        failed = 'Request to {0.bucket} failed with {0.error.value} {0.error.name}: {0.message}'
 
         # Try to get any useful data from the dict
         error_code = data.get('code', 0)
         if isinstance(data, dict):
             try:
-                self.error_code = JSONErrorCodes(error_code)
+                self.error = JSONErrorCodes(error_code)
             except ValueError:
                 logger.warning('Unknown error code %d', error_code)
-                self.error_code = JSONErrorCodes.UNKNOWN
+                self.error = JSONErrorCodes.UNKNOWN
 
             self.errors = data.get('errors', {})
             self.message = data.get('message', '')
@@ -208,8 +212,9 @@ class RequestFailed(ClamorError):
 
         if self.errors:
             errors = self._flatten_errors(self.errors)
-            error_list = '\n'.join(starmap('{}: {}'.format, errors.items()))
-            failed += '\n{}'.format(error_list)
+            error_list = '\n'.join(
+                starmap('code: {1[0][code]}, message: {1[0][message]}'.format, errors.items()))
+            failed += '\nAdditional errors: {}'.format(error_list)
 
         super().__init__(failed.format(self))
 
@@ -227,12 +232,16 @@ class RequestFailed(ClamorError):
                 else:
                     new_key = '{}.[{}]'.format(key, k)
 
-            try:
-                _errors = v['_errors']
-            except KeyError:
-                messages.extend(self._flatten_errors(v, new_key).items())
+            if isinstance(v, dict):
+                try:
+                    _errors = v['_errors']
+                except KeyError:
+                    messages.extend(self._flatten_errors(v, new_key).items())
+                else:
+                    messages.append(
+                        (new_key, ' '.join(error.get('message', '') for error in _errors)))
             else:
-                messages.append((new_key, ' '.join(error.get('message', '') for error in _errors)))
+                messages.append((new_key, v))
 
         return dict(messages)
 

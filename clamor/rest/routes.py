@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum
+from typing import NewType, Tuple
 
 __all__ = (
     'Methods',
     'Routes',
+    'APIRoute',
 )
 
 
@@ -153,3 +155,7 @@ class Routes:
     GATEWAY = '/gateway'
     GET_GATEWAY = (Methods.GET, GATEWAY)
     GET_GATEWAY_BOT = (Methods.GET, GATEWAY + '/bot')
+
+
+#: A type to denote Discord API routes.
+APIRoute = NewType('Route', Tuple[Methods, str])

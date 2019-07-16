@@ -3,7 +3,7 @@
 import logging
 import sys
 from random import randint
-from typing import NewType, Optional, Tuple, Union
+from typing import Optional, Union
 from urllib.parse import quote
 
 import anyio
@@ -13,15 +13,13 @@ from asks.response_objects import Response
 from ..exceptions import RequestFailed, Unauthorized, Forbidden, NotFound
 from ..meta import __url__ as clamor_url, __version__ as clamor_version
 from .rate_limit import Bucket
+from .routes import APIRoute
 
 __all__ = (
     'HTTP',
 )
 
 logger = logging.getLogger(__name__)
-
-#: A type to denote Discord API routes.
-Route = NewType('Route', Tuple[str, str])
 
 
 class HTTP:
@@ -55,7 +53,7 @@ class HTTP:
             return response.json(encoding='utf-8')
         return response.text.encode('utf-8')
 
-    async def make_request(self, route: Route, fmt: dict = None, **kwargs):
+    async def make_request(self, route: APIRoute, fmt: dict = None, **kwargs):
         fmt = fmt or {}
         retries = kwargs.pop('retries', 0)
         # The API shares rate limits with minor routes of guild, channel
@@ -84,6 +82,7 @@ class HTTP:
         logger.debug('Performing request to bucket %s', bucket)
 
         response = await self._session.request(method, url, **kwargs)
+        response.route = route
 
         return await self.parse_response(response, bucket=bucket, retries=retries, **kwargs)
 
@@ -131,4 +130,4 @@ class HTTP:
             await anyio.sleep(retry_after)
 
             return await self.make_request(
-                (response.method, response.url), {}, retries=retries, **kwargs)
+                response.route, {}, retries=retries, **kwargs)

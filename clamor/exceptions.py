@@ -218,7 +218,7 @@ class RequestFailed(ClamorError):
 
         super().__init__(failed.format(self))
 
-    def _flatten_errors(self, errors: dict, key: str = ''):
+    def _flatten_errors(self, errors: dict, key: str = '') -> dict:
         messages = []
 
         for k, v in errors.items():

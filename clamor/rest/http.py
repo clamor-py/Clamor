@@ -12,7 +12,7 @@ from asks.response_objects import Response
 
 from ..exceptions import RequestFailed, Unauthorized, Forbidden, NotFound
 from ..meta import __url__ as clamor_url, __version__ as clamor_version
-from .rate_limit import Bucket
+from .rate_limit import Bucket, RateLimiter
 from .routes import APIRoute
 
 __all__ = (
@@ -32,6 +32,7 @@ class HTTP:
     def __init__(self, token: str, **kwargs):
         self._token = token
         self._session = kwargs.get('session', asks.Session())
+        self.rate_limiter = RateLimiter()
 
         self.headers = {
             'User-Agent': self.user_agent,
@@ -81,13 +82,25 @@ class HTTP:
         bucket = (method, route[1].format(**bucket_fmt))
         logger.debug('Performing request to bucket %s', bucket)
 
+        # This waits for a global rate limit to reset.
+        # If none is exhausted, the lock will be
+        # released immediately.
+        async with self.rate_limiter.global_lock:
+            pass
+
+        if await self.rate_limiter.cooldown_bucket(bucket) > 0:
+            logger.debug('Bucket %s has been cooled down!', bucket)
+
         response = await self._session.request(method, url, **kwargs)
         response.route = route
 
-        return await self.parse_response(response, bucket=bucket, retries=retries, **kwargs)
+        await self.rate_limiter.update_bucket(bucket, response)
+
+        return await self.parse_response(response, fmt, bucket=bucket, retries=retries, **kwargs)
 
     async def parse_response(self,
                              response: Response,
+                             fmt: dict,
                              *,
                              bucket: Bucket,
                              retries: int = 0,
@@ -130,4 +143,4 @@ class HTTP:
             await anyio.sleep(retry_after)
 
             return await self.make_request(
-                response.route, {}, retries=retries, **kwargs)
+                response.route, fmt, retries=retries, **kwargs)

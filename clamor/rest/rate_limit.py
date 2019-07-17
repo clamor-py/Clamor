@@ -6,6 +6,7 @@ from email.utils import parsedate_to_datetime
 from typing import NewType, Tuple, Union
 
 import anyio
+from async_generator import async_generator, asynccontextmanager, yield_
 from asks.response_objects import Response
 
 __all__ = (
@@ -89,6 +90,24 @@ class RateLimiter:
     def __init__(self):
         self._buckets = {}
         self.global_lock = anyio.create_lock()
+
+    @asynccontextmanager
+    @async_generator
+    async def __call__(self, bucket: Bucket):
+        # If a global rate limit occurred, this is going to block
+        # until the lock has been released after a cooldown.
+        # If no global limit is exhausted, the lock will be
+        # released immediately.
+        async with self.global_lock:
+            pass
+
+        try:
+            if await self.cooldown_bucket(bucket) > 0:
+                logger.debug('Bucket %s cooled down', bucket)
+
+            await yield_(self)
+        finally:
+            pass
 
     @property
     def buckets(self) -> dict:

@@ -90,19 +90,11 @@ class HTTP:
         bucket = (method, route[1].format(**bucket_fmt))
         logger.debug('Performing request to bucket %s', bucket)
 
-        # This waits for a global rate limit to reset.
-        # If none is exhausted, the lock will be
-        # released immediately.
-        async with self.rate_limiter.global_lock:
-            pass
+        async with self.rate_limiter(bucket):
+            response = await self._session.request(method, url, **kwargs)
+            response.route = route
 
-        if await self.rate_limiter.cooldown_bucket(bucket) > 0:
-            logger.debug('Bucket %s has been cooled down!', bucket)
-
-        response = await self._session.request(method, url, **kwargs)
-        response.route = route
-
-        await self.rate_limiter.update_bucket(bucket, response)
+            await self.rate_limiter.update_bucket(bucket, response)
 
         return await self.parse_response(response, fmt, bucket=bucket, retries=retries, **kwargs)
 

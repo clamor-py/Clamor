@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 class HTTP:
+    """"""
+
     BASE_URL = 'https://discordapp.com/api/v7'
     MAX_RETRIES = 5
 
@@ -41,10 +43,14 @@ class HTTP:
 
     @property
     def token(self) -> str:
+        """"""
+
         return self._token
 
     @property
     def user_agent(self) -> str:
+        """"""
+
         fmt = 'DiscordBot ({0}, v{1}) / Python {2[0]}.{2[1]}.{2[2]}'
         return fmt.format(clamor_url, clamor_version, sys.version_info)
 
@@ -55,6 +61,8 @@ class HTTP:
         return response.text.encode('utf-8')
 
     async def make_request(self, route: APIRoute, fmt: dict = None, **kwargs):
+        """"""
+
         fmt = fmt or {}
         retries = kwargs.pop('retries', 0)
         # The API shares rate limits with minor routes of guild, channel
@@ -105,6 +113,8 @@ class HTTP:
                              bucket: Bucket,
                              retries: int = 0,
                              **kwargs) -> Optional[Union[dict, str]]:
+        """"""
+
         data = self._parse_response(response)
         status = response.status_code
 
@@ -144,3 +154,8 @@ class HTTP:
 
             return await self.make_request(
                 response.route, fmt, retries=retries, **kwargs)
+
+    async def close(self):
+        """"""
+
+        await self._session.close()

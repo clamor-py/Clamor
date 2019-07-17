@@ -10,6 +10,8 @@ from asks.response_objects import Response
 
 __all__ = (
     'Bucket',
+    'CooldownBucket',
+    'RateLimiter'
 )
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ class CooldownBucket:
         self._remaining = int(headers.get('X-RateLimit-Remaining'))
         self._reset = datetime.fromtimestamp(int(headers.get('X-RateLimit-Reset')), timezone.utc)
 
-    async def wait(self):
+    async def wait(self) -> float:
         """"""
 
         start = datetime.utcnow()
@@ -71,7 +73,7 @@ class CooldownBucket:
 
         return (datetime.utcnow() - start).total_seconds()
 
-    async def cooldown(self):
+    async def cooldown(self) -> float:
         """"""
 
         delay = (self._reset - self._date).total_seconds() + .5
@@ -89,12 +91,12 @@ class RateLimiter:
         self.global_lock = anyio.create_lock()
 
     @property
-    def buckets(self):
+    def buckets(self) -> dict:
         """"""
 
         return self._buckets
 
-    async def cooldown_bucket(self, bucket: Bucket):
+    async def cooldown_bucket(self, bucket: Bucket) -> float:
         """"""
 
         if bucket in self._buckets:
@@ -102,7 +104,7 @@ class RateLimiter:
                 if self._buckets[bucket].will_rate_limit:
                     return await self._buckets[bucket].cooldown()
 
-        return 0
+        return 0.0
 
     async def update_bucket(self, bucket: Bucket, response: Response):
         """"""

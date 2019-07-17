@@ -44,7 +44,7 @@ class CooldownBucket:
     def will_rate_limit(self) -> bool:
         """Whether the next request is going to exhaust a rate limit or not."""
 
-        return datetime.now(timezone.utc) <= self._reset and self._remaining == 0
+        return self._remaining == 0
 
     def update(self, response: Response):
         """"""
@@ -73,9 +73,6 @@ class CooldownBucket:
 
     async def cooldown(self):
         """"""
-
-        if self._reset < datetime.now(timezone.utc):
-            raise ValueError('Cannot cooldown for a negative time period.')
 
         delay = (self._reset - self._date).total_seconds() + .5
         logger.debug('Cooling bucket %s for %d seconds', self, delay)
@@ -113,7 +110,7 @@ class RateLimiter:
         if 'X-RateLimit-Global' in response.headers:
             async with self.global_lock:
                 await anyio.sleep(
-                    response.json(encoding='utf-8')['retry-after'] / 1000.0
+                    int(response.headers.get('Retry-After')) / 1000.0
                 )
 
         if bucket in self._buckets:

@@ -60,7 +60,10 @@ class HTTP:
             return response.json(encoding='utf-8')
         return response.text.encode('utf-8')
 
-    async def make_request(self, route: APIRoute, fmt: dict = None, **kwargs):
+    async def make_request(self,
+                           route: APIRoute,
+                           fmt: dict = None,
+                           **kwargs) -> Optional[Union[dict, list, str]]:
         """"""
 
         fmt = fmt or {}
@@ -96,7 +99,11 @@ class HTTP:
 
             await self.rate_limiter.update_bucket(bucket, response)
 
-        return await self.parse_response(response, fmt, bucket=bucket, retries=retries, **kwargs)
+        return await self.parse_response(response,
+                                         fmt,
+                                         bucket=bucket,
+                                         retries=retries,
+                                         **kwargs)
 
     async def parse_response(self,
                              response: Response,
@@ -104,7 +111,7 @@ class HTTP:
                              *,
                              bucket: Bucket,
                              retries: int = 0,
-                             **kwargs) -> Optional[Union[dict, str]]:
+                             **kwargs) -> Optional[Union[dict, list, str]]:
         """"""
 
         data = self._parse_response(response)

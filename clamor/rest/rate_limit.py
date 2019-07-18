@@ -12,7 +12,7 @@ from asks.response_objects import Response
 __all__ = (
     'Bucket',
     'CooldownBucket',
-    'RateLimiter'
+    'RateLimiter',
 )
 
 logger = logging.getLogger(__name__)
@@ -64,15 +64,6 @@ class CooldownBucket:
         self._date = parsedate_to_datetime(headers.get('Date'))
         self._remaining = int(headers.get('X-RateLimit-Remaining'))
         self._reset = datetime.fromtimestamp(int(headers.get('X-RateLimit-Reset')), timezone.utc)
-
-    async def wait(self) -> float:
-        """"""
-
-        start = datetime.utcnow()
-        async with self.lock:
-            pass
-
-        return (datetime.utcnow() - start).total_seconds()
 
     async def cooldown(self) -> float:
         """"""

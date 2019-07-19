@@ -82,8 +82,12 @@ class AuditLogAction(IntEnum):
 class AuditLogWrapper(EndpointsWrapper):
     """"""
 
+    def __init__(self, token: str, guild_id: Snowflake):
+        super().__init__(token)
+
+        self.guild_id = guild_id
+
     async def get_guild_audit_log(self,
-                                  guild_id: Snowflake,
                                   user_id: Snowflake,
                                   action_type: Union[AuditLogAction, int] = None,
                                   before: Snowflake = None,
@@ -98,5 +102,5 @@ class AuditLogWrapper(EndpointsWrapper):
         })
 
         return await self.http.make_request(Routes.GET_GUILD_AUDIT_LOG,
-                                            dict(guild=guild_id),
+                                            dict(guild=self.guild_id),
                                             params=params)

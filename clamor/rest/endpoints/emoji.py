@@ -11,20 +11,24 @@ __all__ = (
 class EmojiWrapper(EndpointsWrapper):
     """"""
 
-    async def list_guild_emojis(self, guild_id: Snowflake) -> list:
+    def __init__(self, token: str, guild_id: Snowflake):
+        super().__init__(token)
+
+        self.guild_id = guild_id
+
+    async def list_guild_emojis(self) -> list:
         """"""
 
         return await self.http.make_request(Routes.LIST_GUILD_EMOJIS,
-                                            dict(guild=guild_id))
+                                            dict(guild=self.guild_id))
 
-    async def get_guild_emoji(self, guild_id: Snowflake, emoji_id: Snowflake) -> dict:
+    async def get_guild_emoji(self, emoji_id: Snowflake) -> dict:
         """"""
 
         return await self.http.make_request(Routes.GET_GUILD_EMOJI,
-                                            dict(guild=guild_id, emoji=emoji_id))
+                                            dict(guild=self.guild_id, emoji=emoji_id))
 
     async def create_guild_emoji(self,
-                                 guild_id: Snowflake,
                                  name: str,
                                  image: str,
                                  roles: list) -> dict:
@@ -37,11 +41,10 @@ class EmojiWrapper(EndpointsWrapper):
         }
 
         return await self.http.make_request(Routes.CREATE_GUILD_EMOJI,
-                                            dict(guild=guild_id),
+                                            dict(guild=self.guild_id),
                                             json=params)
 
     async def modify_guild_emoji(self,
-                                 guild_id: Snowflake,
                                  emoji_id: Snowflake,
                                  name: str = None,
                                  roles: list = None) -> dict:
@@ -53,11 +56,11 @@ class EmojiWrapper(EndpointsWrapper):
         })
 
         return await self.http.make_request(Routes.MODIFY_GUILD_EMOJI,
-                                            dict(guild=guild_id, emoji=emoji_id),
+                                            dict(guild=self.guild_id, emoji=emoji_id),
                                             json=params)
 
-    async def delete_guild_emoji(self, guild_id: Snowflake, emoji_id: Snowflake):
+    async def delete_guild_emoji(self, emoji_id: Snowflake):
         """"""
 
         return await self.http.make_request(Routes.DELETE_GUILD_EMOJI,
-                                            dict(guild=guild_id, emoji=emoji_id))
+                                            dict(guild=self.guild_id, emoji=emoji_id))

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
 from typing import NewType, Union
 
 from ..http import HTTP
@@ -36,6 +37,15 @@ class EndpointsWrapper:
         """"""
 
         return self.http.token
+
+    @contextmanager
+    def raw_responses(self):
+        """"""
+
+        try:
+            yield self.http.responses
+        finally:
+            self.http.responses.clear()
 
     def new_instance(self) -> 'EndpointsWrapper':
         """"""

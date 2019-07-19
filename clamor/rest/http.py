@@ -36,6 +36,7 @@ class HTTP:
         self._session = kwargs.get('session', asks.Session())
         self.rate_limiter = RateLimiter()
 
+        self._responses = []
         self.headers = {
             'User-Agent': self.user_agent,
             'Authorization': 'Bot ' + self._token,
@@ -53,6 +54,12 @@ class HTTP:
 
         fmt = 'DiscordBot ({0}, v{1}) / Python {2[0]}.{2[1]}.{2[2]}'
         return fmt.format(clamor_url, clamor_version, sys.version_info)
+
+    @property
+    def responses(self):
+        """"""
+
+        return self._responses
 
     @staticmethod
     def _parse_response(response: Response):
@@ -98,6 +105,7 @@ class HTTP:
             response.route = route
 
             await self.rate_limiter.update_bucket(bucket, response)
+            self._responses.append(response)
 
         return await self.parse_response(response,
                                          fmt,

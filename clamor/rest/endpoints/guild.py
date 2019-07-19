@@ -37,6 +37,7 @@ class GuildWrapper(EndpointsWrapper):
             "roles": roles,
             "channels": channels
         }
+
         return await self.http.make_request(Routes.CREATE_GUILD,
                                             json=params)
 
@@ -57,7 +58,8 @@ class GuildWrapper(EndpointsWrapper):
                            icon: str = None,
                            owner_id: Snowflake = None,
                            splash: str = None,
-                           system_channel_id: Snowflake = None) -> dict:
+                           system_channel_id: Snowflake = None,
+                           reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -76,19 +78,20 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_GUILD,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def delete_guild(self):
         """"""
 
-        await self.http.make_request(Routes.DELETE_GUILD,
-                                     dict(guild=self.guild_id))
+        return await self.http.make_request(Routes.DELETE_GUILD,
+                                            dict(guild=self.guild_id))
 
     async def get_guild_channels(self) -> list:
         """"""
 
-        await self.http.make_request(Routes.GET_GUILD_CHANNELS,
-                                     dict(guild=self.guild_id))
+        return await self.http.make_request(Routes.GET_GUILD_CHANNELS,
+                                            dict(guild=self.guild_id))
 
     async def create_guild_channel(self,
                                    name: str,
@@ -99,7 +102,8 @@ class GuildWrapper(EndpointsWrapper):
                                    rate_limit_per_user: int = None,
                                    position: int = None,
                                    permission_overwrites: list = None,
-                                   parent_id: Snowflake = None) -> dict:
+                                   parent_id: Snowflake = None,
+                                   reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -116,18 +120,15 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.CREATE_GUILD_CHANNEL,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def modify_guild_channel_positions(self, channels: list):
-        """
+        """"""
 
-        :param channels: List of dictionaries: {"id": <ID_OF_CHANNEL>, "position": <POSITION_OF_CHANNEL>}
-        :return:
-        """
-
-        await self.http.make_request(Routes.MODIFY_GUILD_CHANNEL_POSITIONS,
-                                     dict(guild=self.guild_id),
-                                     json=channels)
+        return await self.http.make_request(Routes.MODIFY_GUILD_CHANNEL_POSITIONS,
+                                            dict(guild=self.guild_id),
+                                            json=channels)
 
     async def get_guild_member(self, user_id: Snowflake) -> dict:
         """"""
@@ -176,7 +177,8 @@ class GuildWrapper(EndpointsWrapper):
                                   roles: list = None,
                                   mute: bool = None,
                                   deaf: bool = None,
-                                  channel_id: Snowflake = None):
+                                  channel_id: Snowflake = None,
+                                  reason: str = None):
         """"""
 
         params = optional(**{
@@ -187,11 +189,12 @@ class GuildWrapper(EndpointsWrapper):
             "channel_id": channel_id
         })
 
-        await self.http.make_request(Routes.MODIFY_GUILD_MEMBER,
+        return await self.http.make_request(Routes.MODIFY_GUILD_MEMBER,
                                             dict(guild=self.guild_id, member=user_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def modify_current_user_nick(self, nick: str) -> str:
+    async def modify_current_user_nick(self, nick: str, reason: str = None) -> str:
         """"""
 
         params = {
@@ -200,29 +203,35 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_CURRENT_USER_NICK,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def add_guild_member_role(self,
                                     user_id: Snowflake,
-                                    role_id: Snowflake):
+                                    role_id: Snowflake,
+                                    reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.ADD_GUILD_MEMBER_ROLE,
-                                     dict(guild=self.guild_id, member=user_id, role=role_id))
+        return await self.http.make_request(Routes.ADD_GUILD_MEMBER_ROLE,
+                                            dict(guild=self.guild_id, member=user_id, role=role_id),
+                                            reason=reason)
 
     async def remove_guild_member_role(self,
                                        user_id: Snowflake,
-                                       role_id: Snowflake):
+                                       role_id: Snowflake,
+                                       reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.REMOVE_GUILD_MEMBER_ROLE,
-                                     dict(guild=self.guild_id, member=user_id, role=role_id))
+        return await self.http.make_request(Routes.REMOVE_GUILD_MEMBER_ROLE,
+                                            dict(guild=self.guild_id, member=user_id, role=role_id),
+                                            reason=reason)
 
-    async def remove_guild_member(self, user_id: Snowflake):
+    async def remove_guild_member(self, user_id: Snowflake, reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.REMOVE_GUILD_MEMBER,
-                                     dict(guild=self.guild_id, member=user_id))
+        return await self.http.make_request(Routes.REMOVE_GUILD_MEMBER,
+                                            dict(guild=self.guild_id, member=user_id),
+                                            reason=reason)
 
     async def get_guild_bans(self) -> list:
         """"""
@@ -251,11 +260,12 @@ class GuildWrapper(EndpointsWrapper):
                                             dict(guild=self.guild_id, user=user_id),
                                             json=params)
 
-    async def remove_guild_ban(self, user_id: Snowflake):
+    async def remove_guild_ban(self, user_id: Snowflake, reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.REMOVE_GUILD_BAN,
-                                            dict(guild=self.guild_id, user=user_id))
+        return await self.http.make_request(Routes.REMOVE_GUILD_BAN,
+                                            dict(guild=self.guild_id, user=user_id),
+                                            reason=reason)
 
     async def get_guild_roles(self):
         """"""
@@ -268,7 +278,10 @@ class GuildWrapper(EndpointsWrapper):
                                 permissions: int = None,
                                 color: int = None,
                                 hoist: bool = None,
-                                mentionable: bool = None) -> dict:
+                                mentionable: bool = None,
+                                reason: str = None) -> dict:
+        """"""
+
         params = optional(**{
             "name": name,
             "permissions": permissions,
@@ -279,15 +292,16 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.CREATE_GUILD_ROLE,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def modify_guild_role_positions(self,
-                                          roles: list) -> list:
+    async def modify_guild_role_positions(self, roles: list, reason: str = None) -> list:
         """"""
 
         return await self.http.make_request(Routes.MODIFY_GUILD_ROLE_POSITIONS,
                                             dict(guild=self.guild_id),
-                                            json=roles)
+                                            json=roles,
+                                            reason=reason)
 
     async def modify_guild_role(self,
                                 role_id: Snowflake,
@@ -295,7 +309,8 @@ class GuildWrapper(EndpointsWrapper):
                                 permissions: int = None,
                                 color: int = None,
                                 hoist: bool = None,
-                                mentionable: bool = None) -> dict:
+                                mentionable: bool = None,
+                                reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -308,19 +323,21 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_GUILD_ROLE,
                                             dict(guild=self.guild_id, role=role_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_guild_role(self, role_id: Snowflake):
+    async def delete_guild_role(self, role_id: Snowflake, reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.DELETE_GUILD_ROLE,
-                                     dict(guild=self.guild_id, role=role_id))
+        return await self.http.make_request(Routes.DELETE_GUILD_ROLE,
+                                            dict(guild=self.guild_id, role=role_id),
+                                            reason=reason)
 
     async def get_guild_prune_count(self) -> dict:
         """"""
 
         return await self.http.make_request(Routes.GET_GUILD_PRUNE_COUNT,
-                                     dict(guild=self.guild_id))
+                                            dict(guild=self.guild_id))
 
     async def begin_guild_prune(self,
                                 days: int,
@@ -356,7 +373,8 @@ class GuildWrapper(EndpointsWrapper):
 
     async def create_guild_integration(self,
                                        int_type: str,
-                                       int_id: Snowflake):
+                                       int_id: Snowflake,
+                                       reason: str = None):
         """"""
 
         params = {
@@ -364,36 +382,40 @@ class GuildWrapper(EndpointsWrapper):
             "id": int_id
         }
 
-        await self.http.make_request(Routes.CREATE_GUILD_INTEGRATION,
-                                     dict(guild=self.guild_id),
-                                     json=params)
+        return await self.http.make_request(Routes.CREATE_GUILD_INTEGRATION,
+                                            dict(guild=self.guild_id),
+                                            json=params,
+                                            reason=reason)
 
     async def modify_guild_integration(self,
                                        integration_id: Snowflake,
                                        expire_behavior: int,
                                        expire_grace_period: int,
-                                       enable_emoticons: bool):
+                                       enable_emoticons: bool,
+                                       reason: str = None):
         params = {
             "expire_behavior": expire_behavior,
             "expire_grace_period": expire_grace_period,
             "enable_emoticons": enable_emoticons
         }
 
-        await self.http.make_request(Routes.MODIFY_GUILD_INTEGRATION,
-                                     dict(guild=self.guild_id, integration=integration_id),
-                                     json=params)
+        return await self.http.make_request(Routes.MODIFY_GUILD_INTEGRATION,
+                                            dict(guild=self.guild_id, integration=integration_id),
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_guild_integration(self, integration_id: Snowflake):
+    async def delete_guild_integration(self, integration_id: Snowflake, reason: str = None):
         """"""
 
-        await self.http.make_request(Routes.DELETE_GUILD_INTEGRATION,
-                                     dict(guild=self.guild_id, integration=integration_id))
+        return await self.http.make_request(Routes.DELETE_GUILD_INTEGRATION,
+                                            dict(guild=self.guild_id, integration=integration_id),
+                                            reason=reason)
 
     async def sync_guild_integration(self, integration_id: Snowflake):
         """"""
 
-        await self.http.make_request(Routes.SYNC_GUILD_INTEGRATION,
-                                     dict(guild=self.guild_id, integration=integration_id))
+        return await self.http.make_request(Routes.SYNC_GUILD_INTEGRATION,
+                                            dict(guild=self.guild_id, integration=integration_id))
 
     async def get_guild_embed(self) -> dict:
         """"""
@@ -403,7 +425,8 @@ class GuildWrapper(EndpointsWrapper):
 
     async def modify_guild_embed(self,
                                  enabled: bool,
-                                 channel_id: Snowflake):
+                                 channel_id: Snowflake,
+                                 reason: str = None):
         """"""
 
         params = {
@@ -413,7 +436,8 @@ class GuildWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_GUILD_EMBED,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def get_guild_vanity_url(self):
         """"""

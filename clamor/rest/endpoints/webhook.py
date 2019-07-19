@@ -23,7 +23,11 @@ class WebhookWrapper(EndpointsWrapper):
 
         return name.strip()
 
-    async def create_webhook(self, channel_id: Snowflake, name: str, avatar: str = None) -> dict:
+    async def create_webhook(self,
+                             channel_id: Snowflake,
+                             name: str,
+                             avatar: str = None,
+                             reason: str = None) -> dict:
         """"""
 
         params = {
@@ -33,7 +37,8 @@ class WebhookWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.CREATE_WEBHOOK,
                                             dict(channel=channel_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def get_channel_webhooks(self, channel_id: Snowflake) -> list:
         """"""
@@ -63,7 +68,8 @@ class WebhookWrapper(EndpointsWrapper):
                              webhook_id: Snowflake,
                              name: str = None,
                              avatar: str = None,
-                             channel_id: Snowflake = None) -> dict:
+                             channel_id: Snowflake = None,
+                             reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -74,13 +80,15 @@ class WebhookWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_WEBHOOK,
                                             dict(webhook=webhook_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def modify_webhook_with_token(self,
                                         webhook_id: Snowflake,
                                         webhook_token: str,
                                         name: str = None,
-                                        avatar: str = None) -> dict:
+                                        avatar: str = None,
+                                        reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -90,19 +98,25 @@ class WebhookWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_WEBHOOK_WITH_TOKEN,
                                             dict(webhook=webhook_id, token=webhook_token),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_webhook(self, webhook_id: Snowflake):
+    async def delete_webhook(self, webhook_id: Snowflake, reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_WEBHOOK,
-                                            dict(webhook=webhook_id))
+                                            dict(webhook=webhook_id),
+                                            reason=reason)
 
-    async def delete_webhook_with_token(self, webhook_id: Snowflake, webhook_token: str):
+    async def delete_webhook_with_token(self,
+                                        webhook_id: Snowflake,
+                                        webhook_token: str,
+                                        reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_WEBHOOK_WITH_TOKEN,
-                                            dict(webhook=webhook_id, token=webhook_token))
+                                            dict(webhook=webhook_id, token=webhook_token),
+                                            reason=reason)
 
     async def execute_webhook(self,
                               webhook_id: Snowflake,

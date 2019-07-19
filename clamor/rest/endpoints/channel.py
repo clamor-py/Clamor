@@ -42,7 +42,8 @@ class ChannelWrapper(EndpointsWrapper):
                              bitrate: int = None,
                              user_limit: int = None,
                              permission_overwrites: list = None,
-                             parent_id: Snowflake = None) -> dict:
+                             parent_id: Snowflake = None,
+                             reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -59,13 +60,15 @@ class ChannelWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_CHANNEL,
                                             dict(channel=self.channel_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_channel(self) -> dict:
+    async def delete_channel(self, reason: str = None) -> dict:
         """"""
 
         return await self.http.make_request(Routes.DELETE_CHANNEL,
-                                            dict(channel=self.channel_id))
+                                            dict(channel=self.channel_id),
+                                            reason=reason)
 
     async def get_channel_messages(self,
                                    around: Snowflake = None,
@@ -194,13 +197,14 @@ class ChannelWrapper(EndpointsWrapper):
                                             dict(channel=self.channel_id, message=message_id),
                                             json=params)
 
-    async def delete_message(self, message_id: Snowflake):
+    async def delete_message(self, message_id: Snowflake, reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_MESSAGE,
-                                            dict(channel=self.channel_id, message=message_id))
+                                            dict(channel=self.channel_id, message=message_id),
+                                            reason=reason)
 
-    async def bulk_delete_messages(self, messages: List[Snowflake]):
+    async def bulk_delete_messages(self, messages: List[Snowflake], reason: str = None):
         """"""
 
         if 2 <= len(messages) <= 100:
@@ -208,13 +212,15 @@ class ChannelWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.BULK_DELETE_MESSAGES,
                                             dict(channel=self.channel_id),
-                                            json={'messages': messages})
+                                            json={'messages': messages},
+                                            reason=reason)
 
     async def edit_channel_permissions(self,
                                        overwrite_id: Snowflake,
                                        allow: int = None,
                                        deny: int = None,
-                                       type: str = None):
+                                       type: str = None,
+                                       reason: str = None):
         """"""
 
         params = optional(**{
@@ -228,7 +234,8 @@ class ChannelWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.EDIT_CHANNEL_PERMISSIONS,
                                             dict(channel=self.channel_id, overwrite=overwrite_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def get_channel_invites(self) -> list:
         """"""
@@ -240,7 +247,8 @@ class ChannelWrapper(EndpointsWrapper):
                                     max_age: int = 86400,
                                     max_uses: int = 0,
                                     temporary: bool = False,
-                                    unique: bool = False) -> dict:
+                                    unique: bool = False,
+                                    reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -252,13 +260,15 @@ class ChannelWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.CREATE_CHANNEL_INVITE,
                                             dict(channel=self.channel_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_channel_permission(self, overwrite_id: Snowflake):
+    async def delete_channel_permission(self, overwrite_id: Snowflake, reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_CHANNEL_PERMISSION,
-                                            dict(channel=self.channel_id, overwrite=overwrite_id))
+                                            dict(channel=self.channel_id, overwrite=overwrite_id),
+                                            reason=reason)
 
     async def trigger_typing_indicator(self):
         """"""
@@ -278,11 +288,12 @@ class ChannelWrapper(EndpointsWrapper):
         return await self.http.make_request(Routes.ADD_PINNED_CHANNEL_MESSAGE,
                                             dict(channel=self.channel_id, message=message_id))
 
-    async def delete_pinned_channel_message(self, message_id: Snowflake):
+    async def delete_pinned_channel_message(self, message_id: Snowflake, reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_PINNED_CHANNEL_MESSAGE,
-                                            dict(channel=self.channel_id, message=message_id))
+                                            dict(channel=self.channel_id, message=message_id),
+                                            reason=reason)
 
     async def group_dm_add_recipient(self,
                                      user_id: Snowflake,

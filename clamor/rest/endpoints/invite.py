@@ -18,8 +18,9 @@ class InviteWrapper(EndpointsWrapper):
                                             dict(invite=invite_code),
                                             params=optional(**{'with_counts': with_counts}))
 
-    async def delete_invite(self, invite_code: str) -> dict:
+    async def delete_invite(self, invite_code: str, reason: str = None) -> dict:
         """"""
 
         return await self.http.make_request(Routes.DELETE_INVITE,
-                                            dict(invite=invite_code))
+                                            dict(invite=invite_code),
+                                            reason=reason)

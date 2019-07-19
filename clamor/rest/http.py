@@ -85,8 +85,8 @@ class HTTP:
             kwargs['headers'] = self.headers
 
         # The additional header for audit logs.
-        if kwargs.get('reason'):
-            kwargs['headers']['X-Audit-Log-Reason'] = quote(kwargs['reason'], '/ ')
+        if 'reason' in kwargs:
+            kwargs['headers']['X-Audit-Log-Reason'] = quote(kwargs['reason'] or '', '/ ')
 
         method = route[0].value
         url = self.BASE_URL + route[1].format(**fmt)

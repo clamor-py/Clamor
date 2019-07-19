@@ -31,7 +31,8 @@ class EmojiWrapper(EndpointsWrapper):
     async def create_guild_emoji(self,
                                  name: str,
                                  image: str,
-                                 roles: list) -> dict:
+                                 roles: list,
+                                 reason: str = None) -> dict:
         """"""
 
         params = {
@@ -42,12 +43,14 @@ class EmojiWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.CREATE_GUILD_EMOJI,
                                             dict(guild=self.guild_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
     async def modify_guild_emoji(self,
                                  emoji_id: Snowflake,
                                  name: str = None,
-                                 roles: list = None) -> dict:
+                                 roles: list = None,
+                                 reason: str = None) -> dict:
         """"""
 
         params = optional(**{
@@ -57,10 +60,12 @@ class EmojiWrapper(EndpointsWrapper):
 
         return await self.http.make_request(Routes.MODIFY_GUILD_EMOJI,
                                             dict(guild=self.guild_id, emoji=emoji_id),
-                                            json=params)
+                                            json=params,
+                                            reason=reason)
 
-    async def delete_guild_emoji(self, emoji_id: Snowflake):
+    async def delete_guild_emoji(self, emoji_id: Snowflake, reason: str = None):
         """"""
 
         return await self.http.make_request(Routes.DELETE_GUILD_EMOJI,
-                                            dict(guild=self.guild_id, emoji=emoji_id))
+                                            dict(guild=self.guild_id, emoji=emoji_id),
+                                            reason=reason)

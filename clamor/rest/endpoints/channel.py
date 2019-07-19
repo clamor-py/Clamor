@@ -17,7 +17,7 @@ class ChannelWrapper(EndpointsWrapper):
 
     def __init__(self, token: str, channel_id: Snowflake):
         super().__init__(token)
-        
+
         self.channel_id = channel_id
 
     @staticmethod

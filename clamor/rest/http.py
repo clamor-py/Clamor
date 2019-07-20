@@ -31,7 +31,30 @@ class _ReattemptRequest(Exception):
 
 
 class HTTP:
-    """"""
+    r"""An interface to perform requests to the Discord API.
+
+    Parameters
+    ----------
+    token : str
+        The token to use for API authorization.
+    \**kwargs : dict
+        See below.
+
+    Keyword Arguments
+    -----------------
+    session : :class:`asks.Session<asks:asks.Session>`, optional
+        The session to use. If none provided, a new one is created.
+    app : str
+        The application type for the ``Authorization`` header.
+        Either ``Bot`` or ``Bearer``, defaults to ``Bot``.
+
+    Attributes
+    ----------
+    rate_limiter : :class:`~clamor.rest.rate_limit.RateLimiter`
+        The rate limiter to use for requests.
+    headers : dict
+        The default headers included in every request.
+    """
 
     #: The API version to use.
     API_VERSION = 7
@@ -53,7 +76,7 @@ class HTTP:
         self._responses = []
         self.headers = {
             'User-Agent': self.user_agent,
-            'Authorization': 'Bot ' + self._token,
+            'Authorization': kwargs.get('app', 'Bot') + ' ' + self._token,
         }
 
     @property

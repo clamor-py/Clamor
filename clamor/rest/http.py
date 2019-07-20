@@ -264,6 +264,6 @@ class HTTP:
             raise _ReattemptRequest(status, data)
 
     async def close(self):
-        """Closes the underyling :class:`Session<asks:asks.Session>`."""
+        """Closes the underlying :class:`Session<asks:asks.Session>`."""
 
         await self._session.close()

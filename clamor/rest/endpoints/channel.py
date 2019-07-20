@@ -13,7 +13,10 @@ __all__ = (
 
 
 class ChannelWrapper(EndpointsWrapper):
-    """"""
+    """A higher-level wrapper around Channel endpoints.
+
+    .. seealso:: Channel endpoints https://discordapp.com/developers/docs/resources/channel
+    """
 
     def __init__(self, token: str, channel_id: Snowflake):
         super().__init__(token)
@@ -29,8 +32,6 @@ class ChannelWrapper(EndpointsWrapper):
         return emoji
 
     async def get_channel(self) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_CHANNEL, dict(channel=self.channel_id))
 
     async def modify_channel(self,
@@ -44,8 +45,6 @@ class ChannelWrapper(EndpointsWrapper):
                              permission_overwrites: list = None,
                              parent_id: Snowflake = None,
                              reason: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'name': name,
             'position': position,
@@ -64,8 +63,6 @@ class ChannelWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def delete_channel(self, reason: str = None) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.DELETE_CHANNEL,
                                             dict(channel=self.channel_id),
                                             reason=reason)
@@ -75,8 +72,6 @@ class ChannelWrapper(EndpointsWrapper):
                                    before: Snowflake = None,
                                    after: Snowflake = None,
                                    limit: int = 50) -> list:
-        """"""
-
         params = optional(**{
             'around': around,
             'before': before,
@@ -89,8 +84,6 @@ class ChannelWrapper(EndpointsWrapper):
                                             params=params)
 
     async def get_channel_message(self, message_id: Snowflake) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_CHANNEL_MESSAGE,
                                             dict(channel=self.channel_id, message=message_id))
 
@@ -100,8 +93,6 @@ class ChannelWrapper(EndpointsWrapper):
                              tts: bool = False,
                              files: list = None,
                              embed: dict = None) -> dict:
-        """"""
-
         payload = optional(**{
             'content': content,
             'nonce': nonce,
@@ -129,16 +120,12 @@ class ChannelWrapper(EndpointsWrapper):
                                             json=payload)
 
     async def create_reaction(self, message_id: Snowflake, emoji: str):
-        """"""
-
         return await self.http.make_request(Routes.CREATE_REACTION,
                                             dict(channel=self.channel_id,
                                                  message=message_id,
                                                  emoji=self._parse_emoji(emoji)))
 
     async def delete_own_reaction(self, message_id: Snowflake, emoji: str):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_OWN_REACTION,
                                             dict(channel=self.channel_id,
                                                  message=message_id,
@@ -148,8 +135,6 @@ class ChannelWrapper(EndpointsWrapper):
                                    message_id: Snowflake,
                                    user_id: Snowflake,
                                    emoji: str):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_USER_REACTION,
                                             dict(channel=self.channel_id,
                                                  message=message_id,
@@ -162,8 +147,6 @@ class ChannelWrapper(EndpointsWrapper):
                             before: Snowflake = None,
                             after: Snowflake = None,
                             limit: int = 25) -> dict:
-        """"""
-
         params = optional(**{
             'before': before,
             'after': after,
@@ -177,8 +160,6 @@ class ChannelWrapper(EndpointsWrapper):
                                             params=params)
 
     async def delete_all_reactions(self, message_id: Snowflake):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_ALL_REACTIONS,
                                             dict(channel=self.channel_id, message=message_id))
 
@@ -186,8 +167,6 @@ class ChannelWrapper(EndpointsWrapper):
                            message_id: Snowflake,
                            content: str = None,
                            embed: dict = None) -> dict:
-        """"""
-
         params = optional(**{
             'content': content,
             'embed': embed,
@@ -198,15 +177,11 @@ class ChannelWrapper(EndpointsWrapper):
                                             json=params)
 
     async def delete_message(self, message_id: Snowflake, reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_MESSAGE,
                                             dict(channel=self.channel_id, message=message_id),
                                             reason=reason)
 
     async def bulk_delete_messages(self, messages: List[Snowflake], reason: str = None):
-        """"""
-
         if 2 <= len(messages) <= 100:
             raise ValueError('Bulk delete requires a message count between 2 and 100')
 
@@ -221,8 +196,6 @@ class ChannelWrapper(EndpointsWrapper):
                                        deny: int = None,
                                        type: str = None,
                                        reason: str = None):
-        """"""
-
         params = optional(**{
             'allow': allow,
             'deny': deny,
@@ -238,8 +211,6 @@ class ChannelWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def get_channel_invites(self) -> list:
-        """"""
-
         return await self.http.make_request(Routes.GET_CHANNEL_INVITES,
                                             dict(channel=self.channel_id))
 
@@ -249,8 +220,6 @@ class ChannelWrapper(EndpointsWrapper):
                                     temporary: bool = False,
                                     unique: bool = False,
                                     reason: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'max_age': max_age,
             'max_uses': max_uses,
@@ -264,33 +233,23 @@ class ChannelWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def delete_channel_permission(self, overwrite_id: Snowflake, reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_CHANNEL_PERMISSION,
                                             dict(channel=self.channel_id, overwrite=overwrite_id),
                                             reason=reason)
 
     async def trigger_typing_indicator(self):
-        """"""
-
         return await self.http.make_request(Routes.TRIGGER_TYPING_INDICATOR,
                                             dict(channel=self.channel_id))
 
     async def get_pinned_messages(self) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_PINNED_MESSAGES,
                                             dict(channel=self.channel_id))
 
     async def add_pinned_channel_message(self, message_id: Snowflake):
-        """"""
-
         return await self.http.make_request(Routes.ADD_PINNED_CHANNEL_MESSAGE,
                                             dict(channel=self.channel_id, message=message_id))
 
     async def delete_pinned_channel_message(self, message_id: Snowflake, reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_PINNED_CHANNEL_MESSAGE,
                                             dict(channel=self.channel_id, message=message_id),
                                             reason=reason)
@@ -299,8 +258,6 @@ class ChannelWrapper(EndpointsWrapper):
                                      user_id: Snowflake,
                                      access_token: str = None,
                                      nick: str = None):
-        """"""
-
         params = optional(**{
             'access_token': access_token,
             'nick': nick
@@ -311,7 +268,5 @@ class ChannelWrapper(EndpointsWrapper):
                                             json=params)
 
     async def group_dm_remove_recipient(self, user_id: Snowflake):
-        """"""
-
         return await self.http.make_request(Routes.GROUP_DM_REMOVE_RECIPIENT,
                                             dict(channel=self.channel_id, user=user_id))

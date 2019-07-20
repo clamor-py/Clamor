@@ -22,13 +22,27 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 
+class _ReattemptRequest(Exception):
+    def __init__(self, status_code: int, data: Optional[Union[dict, list, str]], *args):
+        self.status_code = status_code
+        self.data = data
+
+        super().__init__(*args)
+
+
 class HTTP:
     """"""
 
-    BASE_URL = 'https://discordapp.com/api/v7'
+    #: The API version to use.
+    API_VERSION = 7
+    #: The Discord API URL.
+    BASE_URL = 'https://discordapp.com/api/v{}'.format(API_VERSION)
+    #: The total amount of allowed retries for failed requests.
     MAX_RETRIES = 5
 
+    #: The log message format for successful requests.
     LOG_SUCCESSS = 'Success, {bucket} has received {text}!'
+    #: The log message format for failed requests.
     LOG_FAILURE = 'Request to {bucket} failed with {code}: {error}'
 
     def __init__(self, token: str, **kwargs):
@@ -44,25 +58,25 @@ class HTTP:
 
     @property
     def token(self) -> str:
-        """"""
+        """The token used for API authorization."""
 
         return self._token
 
     @property
     def user_agent(self) -> str:
-        """"""
+        """The ``User-Agent`` header sent in every request."""
 
         fmt = 'DiscordBot ({0}, v{1}) / Python {2[0]}.{2[1]}.{2[2]}'
         return fmt.format(clamor_url, clamor_version, sys.version_info)
 
     @property
     def responses(self):
-        """"""
+        """All API responses this instance has received."""
 
         return self._responses
 
     @staticmethod
-    def _parse_response(response: Response):
+    def _parse_response(response: Response) -> Optional[Union[dict, list, str]]:
         if response.headers['Content-Type'] == 'application/json':
             return response.json(encoding='utf-8')
         return response.text.encode('utf-8')
@@ -71,7 +85,49 @@ class HTTP:
                            route: APIRoute,
                            fmt: dict = None,
                            **kwargs) -> Optional[Union[dict, list, str]]:
-        """"""
+        r"""Makes a request to a given route with a set of arguments.
+
+        It also handles rate limits, non-success status codes and
+        safely parses the response with :meth:`HTTP.parse_response`.
+
+        Parameters
+        ----------
+        route : Tuple[:class:`~clamor.rest.routes.Method`, str]
+            A tuple containing HTTP method and the route to make the request to.
+        fmt : dict
+            A dictionary holding endpoint parameters to dynamically format a route.
+        \**kwargs : dict
+            See below.
+
+        Keyword Arguments
+        -----------------
+        headers : dict, optional
+            Optional HTTP headers to include in the request.
+        retries : int, optional
+            The amount of retries that have yet been attempted.
+        reason : str, optional
+            Additional reason string for the ``X-Audit-Log-Reason``
+            header.
+
+        Returns
+        -------
+        Union[dict, list, str], optional
+            The parsed response.
+
+        Raises
+        ------
+        :exc:`clamor.exceptions.Unauthorized`
+            Raised for status code ``401`` and means your token is invalid.
+        :exc:`clamor.exceptions.Forbidden`
+            Raised for status code ``403`` and means that your token
+            doesn't have permissions for a certain action.
+        :exc:`clamor.exceptions.NotFound`
+            Raised for status code ``404`` and means that the passed API
+            route doesn't exist.
+        :exc:`clamor.exceptions.RequestFailed`
+            Generic exception raised when either retries are exceeded
+            or a non-success status code not listed above occurred.
+        """
 
         fmt = fmt or {}
         retries = kwargs.pop('retries', 0)
@@ -92,8 +148,8 @@ class HTTP:
             kwargs['headers'] = self.headers
 
         # The additional header for audit logs.
-        if 'reason' in kwargs:
-            kwargs['headers']['X-Audit-Log-Reason'] = quote(kwargs['reason'] or '', '/ ')
+        if 'reason' in kwargs and kwargs['reason'] is not None:
+            kwargs['headers']['X-Audit-Log-Reason'] = quote(kwargs['reason'], '/ ')
 
         method = route[0].value
         url = self.BASE_URL + route[1].format(**fmt)
@@ -102,25 +158,58 @@ class HTTP:
 
         async with self.rate_limiter(bucket):
             response = await self._session.request(method, url, **kwargs)
-            response.route = route
 
             await self.rate_limiter.update_bucket(bucket, response)
             self._responses.append(response)
 
-        return await self.parse_response(response,
-                                         fmt,
-                                         bucket=bucket,
-                                         retries=retries,
-                                         **kwargs)
+        try:
+            result = await self.parse_response(bucket, response)
+        except _ReattemptRequest as error:
+            logger.debug(self.LOG_FAILURE.format(
+                bucket=bucket, code=error.status_code, error=response.content))
+
+            retries += 1
+            if retries > self.MAX_RETRIES:
+                raise RequestFailed(response, error.data)
+
+            retry_after = randint(1000, 50000) / 1000.0
+            await anyio.sleep(retry_after)
+
+            return await self.make_request(route, fmt, **kwargs)
+        else:
+            return result
 
     async def parse_response(self,
-                             response: Response,
-                             fmt: dict,
-                             *,
                              bucket: Bucket,
-                             retries: int = 0,
-                             **kwargs) -> Optional[Union[dict, list, str]]:
-        """"""
+                             response: Response) -> Optional[Union[dict, list, str]]:
+        """Parses a given response and handles non-success status codes.
+
+        Parameters
+        ----------
+        bucket : Union[Tuple[str, str], str]
+            The request bucket.
+        response : :class:`Response<asks:asks.response_objects.Response>`
+            The response to parse.
+
+        Returns
+        -------
+        Union[dict, list, str], optional
+            The extracted response content.
+
+        Raises
+        ------
+        :exc:`clamor.exceptions.Unauthorized`
+            Raised for status code ``401`` and means your token is invalid.
+        :exc:`clamor.exceptions.Forbidden`
+            Raised for status code ``403`` and means that your token
+            doesn't have permissions for a certain action.
+        :exc:`clamor.exceptions.NotFound`
+            Raised for status code ``404`` and means that the passed API
+            route doesn't exist.
+        :exc:`clamor.exceptions.RequestFailed`
+            Generic exception raised when either retries are exceeded
+            or a non-success status code not listed above occurred.
+        """
 
         data = self._parse_response(response)
         status = response.status_code
@@ -148,21 +237,10 @@ class HTTP:
                 raise RequestFailed(response, data)
 
         else:
-            # Something weird happened here...Let's try it again.
-            logger.debug(
-                self.LOG_FAILURE.format(bucket=bucket, code=status, error=response.content))
-
-            retries += 1
-            if retries > self.MAX_RETRIES:
-                raise RequestFailed(response, data)
-
-            retry_after = randint(1000, 50000) / 1000.0
-            await anyio.sleep(retry_after)
-
-            return await self.make_request(
-                response.route, fmt, retries=retries, **kwargs)
+            # Something weird happened here...Let's reattempt the request.
+            raise _ReattemptRequest(status, data)
 
     async def close(self):
-        """"""
+        """Closes the underyling :class:`Session<asks:asks.Session>`."""
 
         await self._session.close()

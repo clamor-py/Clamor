@@ -8,7 +8,7 @@ from typing import Optional, Union
 from asks.response_objects import Response
 
 __all__ = (
-    'JSONErrorCodes',
+    'JSONErrorCode',
     'ClamorError',
     'RequestFailed',
     'Unauthorized',
@@ -20,7 +20,7 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 
-class JSONErrorCodes(IntEnum):
+class JSONErrorCode(IntEnum):
     """Enum that holds the REST API JSON error codes."""
 
     #: Unknown opcode.
@@ -141,7 +141,9 @@ class JSONErrorCodes(IntEnum):
     RESOURCE_OVERLOADED = 130000
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """Returns a human-readable version of the enum member's name."""
+
         return ' '.join(part.capitalize() for part in self._name_.split('_'))
 
 
@@ -164,7 +166,7 @@ class RequestFailed(ClamorError):
     ----------
     response : :class:`Response<asks:asks.response_objects.Response>`
         The response for the failed request.
-    data : Optional[dict, str]
+    data : Union[dict, str], optional
         The parsed response body.
 
     Attributes
@@ -175,7 +177,7 @@ class RequestFailed(ClamorError):
         The HTTP status code for the request.
     bucket : Tuple[str, str]
         A tuple containing request method and URL for debugging purposes.
-    error : :class:`~clamor.exceptions.JSONErrorCodes`
+    error : :class:`~clamor.exceptions.JSONErrorCode`
         The JSON error code returned by the API.
     errors : dict
         The unflattened JSON error dict.
@@ -198,17 +200,17 @@ class RequestFailed(ClamorError):
         error_code = data.get('code', 0)
         if isinstance(data, dict):
             try:
-                self.error = JSONErrorCodes(error_code)
+                self.error = JSONErrorCode(error_code)
             except ValueError:
                 logger.warning('Unknown error code %d', error_code)
-                self.error = JSONErrorCodes.UNKNOWN
+                self.error = JSONErrorCode.UNKNOWN
 
             self.errors = data.get('errors', {})
             self.message = data.get('message', '')
 
         else:
             self.message = data
-            self.status_code = JSONErrorCodes.UNKNOWN
+            self.status_code = JSONErrorCode.UNKNOWN
 
         if self.errors:
             errors = self._flatten_errors(self.errors)
@@ -286,6 +288,6 @@ class Hierarchied(ClamorError):
 
     - The bot is trying to kick/ban members with
       a higher role than their own.
-      *Even occurs if the bot has ``Kick/Ban Members``.*
+      *Even occurs if the bot has ``Kick/Ban Members`` permissions.*
     """
     pass

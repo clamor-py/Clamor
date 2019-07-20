@@ -11,7 +11,10 @@ __all__ = (
 
 
 class UserWrapper(EndpointsWrapper):
-    """"""
+    """A higher-level wrapper around User endpoints.
+
+    .. seealso:: User endpoints https://discordapp.com/developers/docs/resources/user
+    """
 
     @staticmethod
     def _check_username(username: str) -> Optional[str]:
@@ -30,19 +33,13 @@ class UserWrapper(EndpointsWrapper):
         return username.strip()
 
     async def get_current_user(self) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_CURRENT_USER)
 
     async def get_user(self, user_id: Snowflake) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_USER,
                                             dict(user=user_id))
 
     async def modify_current_user(self, username: str = None, avatar: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'username': self._check_username(username),
             'avatar': avatar
@@ -55,8 +52,6 @@ class UserWrapper(EndpointsWrapper):
                                       before: Snowflake = None,
                                       after: Snowflake = None,
                                       limit: int = 100) -> list:
-        """"""
-
         params = optional(**{
             'before': before,
             'after': after,
@@ -67,25 +62,17 @@ class UserWrapper(EndpointsWrapper):
                                             params=params)
 
     async def leave_guild(self, guild_id: Snowflake):
-        """"""
-
         return await self.http.make_request(Routes.LEAVE_GUILD,
                                             dict(guild=guild_id))
 
     async def get_user_dms(self) -> list:
-        """"""
-
         return await self.http.make_request(Routes.GET_USER_DMS)
 
     async def create_dm(self, recipient_id: Snowflake) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.CREATE_DM,
                                             json={'recipient_id': recipient_id})
 
     async def create_group_dm(self, access_tokens: List[str], nicks: dict) -> dict:
-        """"""
-
         params = {
             'access_tokens': access_tokens,
             'nicks': nicks,
@@ -95,6 +82,4 @@ class UserWrapper(EndpointsWrapper):
                                             json=params)
 
     async def get_user_connections(self) -> list:
-        """"""
-
         return await self.http.make_request(Routes.GET_USER_CONNECTIONS)

@@ -9,7 +9,10 @@ __all__ = (
 
 
 class EmojiWrapper(EndpointsWrapper):
-    """"""
+    """A higher-level wrapper around Emoji endpoints.
+
+    .. seealso:: Emoji endpoints https://discordapp.com/developers/docs/resources/emoji
+    """
 
     def __init__(self, token: str, guild_id: Snowflake):
         super().__init__(token)
@@ -17,14 +20,10 @@ class EmojiWrapper(EndpointsWrapper):
         self.guild_id = guild_id
 
     async def list_guild_emojis(self) -> list:
-        """"""
-
         return await self.http.make_request(Routes.LIST_GUILD_EMOJIS,
                                             dict(guild=self.guild_id))
 
     async def get_guild_emoji(self, emoji_id: Snowflake) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_GUILD_EMOJI,
                                             dict(guild=self.guild_id, emoji=emoji_id))
 
@@ -33,8 +32,6 @@ class EmojiWrapper(EndpointsWrapper):
                                  image: str,
                                  roles: list,
                                  reason: str = None) -> dict:
-        """"""
-
         params = {
             'name': name,
             'image': image,
@@ -51,8 +48,6 @@ class EmojiWrapper(EndpointsWrapper):
                                  name: str = None,
                                  roles: list = None,
                                  reason: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'name': name,
             'roles': roles
@@ -64,8 +59,6 @@ class EmojiWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def delete_guild_emoji(self, emoji_id: Snowflake, reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_GUILD_EMOJI,
                                             dict(guild=self.guild_id, emoji=emoji_id),
                                             reason=reason)

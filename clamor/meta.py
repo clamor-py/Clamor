@@ -9,7 +9,7 @@ __all__ = (
     '__title__',
     '__url__',
     '__version__',
-    'version_info'
+    'version_info',
 )
 
 __author__ = 'Valentin B.'

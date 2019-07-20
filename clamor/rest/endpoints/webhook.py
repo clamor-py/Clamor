@@ -12,12 +12,13 @@ __all__ = (
 
 
 class WebhookWrapper(EndpointsWrapper):
-    """"""
+    """A higher-level wrapper around Webhook endpoints.
+
+    .. seealso:: Webhook endpoints https://discordapp.com/developers/docs/resources/webhook
+    """
 
     @staticmethod
     def _check_name(name: str) -> Optional[str]:
-        """"""
-
         if 2 > len(name) > 32:
             raise ValueError('Name must be between 2 and 32 characters long')
 
@@ -28,8 +29,6 @@ class WebhookWrapper(EndpointsWrapper):
                              name: str,
                              avatar: str = None,
                              reason: str = None) -> dict:
-        """"""
-
         params = {
             'name': self._check_name(name),
             'avatar': avatar,
@@ -41,26 +40,18 @@ class WebhookWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def get_channel_webhooks(self, channel_id: Snowflake) -> list:
-        """"""
-
         return await self.http.make_request(Routes.GET_CHANNEL_WEBHOOKS,
                                             dict(channel=channel_id))
 
     async def get_guild_webhooks(self, guild_id: Snowflake) -> list:
-        """"""
-
         return await self.http.make_request(Routes.GET_GUILD_WEBHOOKS,
                                             dict(guild=guild_id))
 
     async def get_webhook(self, webhook_id: Snowflake) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_WEBHOOK,
                                             dict(webhook=webhook_id))
 
     async def get_webhook_with_token(self, webhook_id: Snowflake, webhook_token: str) -> dict:
-        """"""
-
         return await self.http.make_request(Routes.GET_WEBHOOK_WITH_TOKEN,
                                             dict(webhook=webhook_id, token=webhook_token))
 
@@ -70,8 +61,6 @@ class WebhookWrapper(EndpointsWrapper):
                              avatar: str = None,
                              channel_id: Snowflake = None,
                              reason: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'name': self._check_name(name),
             'avatar': avatar,
@@ -89,8 +78,6 @@ class WebhookWrapper(EndpointsWrapper):
                                         name: str = None,
                                         avatar: str = None,
                                         reason: str = None) -> dict:
-        """"""
-
         params = optional(**{
             'name': self._check_name(name),
             'avatar': avatar
@@ -102,8 +89,6 @@ class WebhookWrapper(EndpointsWrapper):
                                             reason=reason)
 
     async def delete_webhook(self, webhook_id: Snowflake, reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_WEBHOOK,
                                             dict(webhook=webhook_id),
                                             reason=reason)
@@ -112,8 +97,6 @@ class WebhookWrapper(EndpointsWrapper):
                                         webhook_id: Snowflake,
                                         webhook_token: str,
                                         reason: str = None):
-        """"""
-
         return await self.http.make_request(Routes.DELETE_WEBHOOK_WITH_TOKEN,
                                             dict(webhook=webhook_id, token=webhook_token),
                                             reason=reason)
@@ -128,8 +111,6 @@ class WebhookWrapper(EndpointsWrapper):
                               files: list = None,
                               embeds: list = None,
                               wait: bool = False):
-        """"""
-
         if not content and not files and not embeds:
             raise ValueError('At least one of content, files or embeds is required')
 

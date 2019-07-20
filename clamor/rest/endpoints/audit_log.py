@@ -80,7 +80,10 @@ class AuditLogAction(IntEnum):
 
 
 class AuditLogWrapper(EndpointsWrapper):
-    """"""
+    """A higher-level wrapper around Audit Log endpoints.
+
+    .. seealso:: Audit Log endpoints https://discordapp.com/developers/docs/resources/audit-log
+    """
 
     def __init__(self, token: str, guild_id: Snowflake):
         super().__init__(token)
@@ -92,8 +95,6 @@ class AuditLogWrapper(EndpointsWrapper):
                                   action_type: Union[AuditLogAction, int] = None,
                                   before: Snowflake = None,
                                   limit: int = 50) -> dict:
-        """"""
-
         params = optional(**{
             'user_id': user_id,
             'action_type': action_type if isinstance(action_type, int) else action_type.value,

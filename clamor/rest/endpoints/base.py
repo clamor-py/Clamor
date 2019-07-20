@@ -16,7 +16,10 @@ Snowflake = NewType('Snowflake', Union[int, str])
 
 
 def optional(**kwargs) -> dict:
-    """"""
+    """Given a dictionary, this filters out all values that are ``None``.
+
+    Useful for routes where certain parameters are optional.
+    """
 
     return {
         key: value for key, value in kwargs.items()
@@ -25,7 +28,7 @@ def optional(**kwargs) -> dict:
 
 
 class EndpointsWrapper:
-    """"""
+    """Base class for higher-level wrappers for API endpoints."""
 
     __slots__ = ('http',)
 
@@ -34,20 +37,20 @@ class EndpointsWrapper:
 
     @property
     def token(self) -> str:
-        """"""
+        """The token that is used for API authorization."""
 
         return self.http.token
 
     @contextmanager
     def raw_responses(self):
-        """"""
+        """A contextmanager that yields all raw responses this instance holds.
+
+        .. warning::
+
+            Do not use this if you don't know what you're doing.
+        """
 
         try:
             yield self.http.responses
         finally:
             self.http.responses.clear()
-
-    def new_instance(self) -> 'EndpointsWrapper':
-        """"""
-
-        return self.__class__(self.token)

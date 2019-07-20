@@ -15,9 +15,9 @@ __all__ = (
 __author__ = 'Valentin B.'
 __copyright__ = 'Copyright 2019 Valentin B.'
 __license__ = 'MIT'
-__title__ = 'Clamor',
+__title__ = 'Clamor'
 __url__ = 'https://github.com/clamor-py/Clamor'
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 VersionInfo = namedtuple('VersionInfo', 'major minor micro releaselevel serial')
-version_info = VersionInfo(0, 1, 0, 'beta', 0)
+version_info = VersionInfo(0, 2, 0, 'beta', 0)

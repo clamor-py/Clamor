@@ -10,8 +10,8 @@ The Python Discord API Framework.
 :license: MIT, see LICENSE for more details.
 """
 
-from . import meta
 from .meta import *
+from .rest import *
 
 import logging
 

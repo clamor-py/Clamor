@@ -61,7 +61,7 @@ class DiscordWebsocketClient:
         self.emitter = Emitter()
 
         # Websocket connection
-        self._con: anysocks.client.WebSocketConnection = None
+        self._con = None
         self._running = False
 
         # Heartbeat stuff
@@ -131,6 +131,7 @@ class DiscordWebsocketClient:
             await self._send(1, self._last_sequence)
             self._has_ack = False
         else:
+            logger.error("Gateway hasn't responded with a heartbeat ACK")
             self._running = False
             await self._con.close()
 

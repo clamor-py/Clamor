@@ -12,6 +12,7 @@ The Python Discord API Framework.
 
 from .meta import *
 from .rest import *
+from .gateway import *
 
 import logging
 

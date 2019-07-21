@@ -20,4 +20,4 @@ class GatewayTests(unittest.TestCase):
 
             await gw.start(TOKEN)
 
-        anyio.run(main, backend='trio')
+        anyio.run(main)

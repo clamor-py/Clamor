@@ -3,10 +3,7 @@
 import logging
 import zlib
 import platform
-try:
-    import ujson as json
-except ModuleNotFoundError:
-    import json
+import json
 from typing import Union
 
 import anysocks
@@ -24,7 +21,7 @@ logger = logging.getLogger(__name__)
 class DiscordWebsocketClient:
     """Used to connect to the gateway and handle all messages it sends
 
-    Todo: Add sharding, resuming, handle all the opcodes properly especially dispatch, probably code cleanup
+    Todo: Add sharding/resuming, handle opcodes properly especially dispatch, probably code cleanup
 
     Parameters
     ----------

@@ -9,15 +9,16 @@ from .opcodes import opcodes
 class Emitter:
     def __init__(self):
         self.reg = list()
-        for i in range(len(opcodes)): self.reg.append(None)
+        for i in range(len(opcodes)):
+            self.reg.append(None)
 
-    def add_listener(self, opcode: Union[int, str], listener: Callable[..., Coroutine[Any, Any, None]]):
-        if isinstance(opcode, str):
-            opcode = opcodes[opcode]
-        self.reg[opcode] = listener
+    def add_listener(self, op: Union[int, str], listener: Callable[..., Coroutine[Any, Any, None]]):
+        if isinstance(op, str):
+            op = opcodes[op]
+        self.reg[op] = listener
 
-    async def emit(self, opcode: Union[int, str], data):
-        if isinstance(opcode, str):
-            opcode = opcodes[opcode]
-        if self.reg[opcode]:
-            await self.reg[opcode](data)
+    async def emit(self, op: Union[int, str], data):
+        if isinstance(op, str):
+            op = opcodes[op]
+        if self.reg[op]:
+            await self.reg[op](data)

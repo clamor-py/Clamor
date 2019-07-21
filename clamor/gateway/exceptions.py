@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 from ..exceptions import ClamorError
 
-__all__= (
+__all__ = (
     'GatewayError',
     'EncodingError',
     'InvalidListener',

@@ -44,6 +44,8 @@ class DiscordWebsocketClient:
         Represents the connection to the gateway
     _running : bool
         Indicates the status of the client
+    _tg : anyio.TaskGroup
+        TaskGroup to be able to stop all tasks
     _interval : int
         Interval at which a heartbeat is sent
     _last_sequence : int
@@ -63,6 +65,7 @@ class DiscordWebsocketClient:
         # Websocket connection
         self._con = None
         self._running = False
+        self._tg = None
 
         # Heartbeat stuff
         self._interval = 0
@@ -132,8 +135,7 @@ class DiscordWebsocketClient:
             self._has_ack = False
         else:
             logger.error("Gateway hasn't responded with a heartbeat ACK")
-            self._running = False
-            await self._con.close()
+            await self.close()
 
     async def _receive_task(self):
         """|coro|
@@ -170,6 +172,7 @@ class DiscordWebsocketClient:
         .. warning:: This should only be called internally by the client.
         """
         async with anyio.create_task_group() as tg:
+            self._tg = tg
             await tg.spawn(self._heartbeat_task)
             await tg.spawn(self._receive_task)
             await tg.spawn(self._identify, token)
@@ -188,3 +191,8 @@ class DiscordWebsocketClient:
 
     async def start(self, token: str):
         await self.connect(token)
+
+    async def close(self):
+        self._running = False
+        await self._con.close()
+        await self._tg.cancel_scope.cancel()

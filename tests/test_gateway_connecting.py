@@ -17,6 +17,12 @@ class GatewayTests(unittest.TestCase):
             gw = gateway.DiscordWebsocketClient(url['url'])
             self.assertIsInstance(gw, gateway.DiscordWebsocketClient)
 
-            await gw.start(os.environ['TEST_BOT_TOKEN'])
+            async def stop_gatway(after):
+                await anyio.sleep(after)
+                await gw.close()
+
+            async with anyio.create_task_group() as tg:
+                await tg.spawn(gw.start, os.environ['TEST_BOT_TOKEN'])
+                await tg.spawn(stop_gatway, 10)
 
         anyio.run(main)

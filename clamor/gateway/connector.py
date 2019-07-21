@@ -194,5 +194,4 @@ class DiscordWebsocketClient:
 
     async def close(self):
         self._running = False
-        await self._con.close()
         await self._tg.cancel_scope.cancel()

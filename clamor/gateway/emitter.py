@@ -15,10 +15,14 @@ class Emitter:
     def add_listener(self, op: Union[int, str], listener: Callable[..., Coroutine[Any, Any, None]]):
         if isinstance(op, str):
             op = opcodes[op]
+        # Todo: check if listener is valid (coroutine)
         self.reg[op] = listener
 
-    async def emit(self, op: Union[int, str], data):
+    async def emit(self, op: Union[int, str], data, event: str = None):
         if isinstance(op, str):
             op = opcodes[op]
         if self.reg[op]:
-            await self.reg[op](data)
+            if op == 0 and event:
+                await self.reg[op](data, event)
+            else:
+                await self.reg[op](data)

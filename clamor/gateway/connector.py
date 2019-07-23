@@ -50,6 +50,12 @@ class DiscordWebsocketClient:
         Interval at which a heartbeat is sent
     _last_sequence : int
         Used for heartbeating
+    _has_ack : bool
+        Used to check if the gateway has responded with a heartbeat ACK
+    _session_id : int
+        Used for resuming
+    _token : str
+        Is normally carried using function arguments, but resuming requires it to be stored
     """
 
     VERSION = 6
@@ -71,6 +77,10 @@ class DiscordWebsocketClient:
         self._interval = 0
         self._last_sequence = None
         self._has_ack = True
+
+        # Resuming
+        self._session_id = 0
+        self._token = ""
 
         self.emitter.add_listener('HELLO', self._on_hello)
         self.emitter.add_listener('HEARTBEAT_ACK', self._on_heartbeat_ack)
@@ -118,9 +128,14 @@ class DiscordWebsocketClient:
     async def _on_hello(self, data):
         self._interval = int(data["heartbeat_interval"])
         logger.debug("Found heartbeat interval: {}".format(self._interval))
+        await self._tg.spawn(self._heartbeat_task)
 
     async def _on_heartbeat_ack(self, data):
         self._has_ack = True
+
+    async def _on_dispatch(self, data, event):
+        if event == "ready":
+            self._session_id = int(data["session_id"])
 
     async def _heartbeat(self):
         """|coro|
@@ -135,7 +150,7 @@ class DiscordWebsocketClient:
             self._has_ack = False
         else:
             logger.error("Gateway hasn't responded with a heartbeat ACK")
-            await self.close()
+            await self.resume()
 
     async def _receive_task(self):
         """|coro|
@@ -145,15 +160,15 @@ class DiscordWebsocketClient:
         """
         while self._running:
             message = await self._receive()
-            await self.emitter.emit(message['op'], message['d'])
+            await self.emitter.emit(message['op'], message['d'], message.get('t'))
 
     async def _heartbeat_task(self):
         while self._running:
             await self._heartbeat()
 
-    async def _identify(self, token):
+    async def _identify(self):
         identify = {
-            'token': token,
+            'token': self._token,
             'properties': {
                 '$os': platform.system(),
                 '$browser': 'clamor',
@@ -164,10 +179,20 @@ class DiscordWebsocketClient:
         }
         await self._send('IDENTIFY', identify)
 
-    async def on_open(self, token):
-        """|coro|
-
+    async def on_open(self):
+        """
         Called when a websocket connection was established
+
+        .. warning:: This should only be called internally by the client.
+        """
+        async with anyio.create_task_group() as tg:
+            self._tg = tg
+            await tg.spawn(self._receive_task)
+            await tg.spawn(self._identify)
+
+    async def on_resume(self):
+        """
+        Called after the resume payload was send
 
         .. warning:: This should only be called internally by the client.
         """
@@ -175,11 +200,9 @@ class DiscordWebsocketClient:
             self._tg = tg
             await tg.spawn(self._heartbeat_task)
             await tg.spawn(self._receive_task)
-            await tg.spawn(self._identify, token)
 
-    async def connect(self, token):
-        """|coro|
-
+    async def connect(self):
+        """
         Opens a connection to the gateway and starts receiving
 
         .. warning:: This should only be called internally by the client.
@@ -187,10 +210,25 @@ class DiscordWebsocketClient:
         async with anysocks.open_connection(self.url) as con:
             self._con = con
             self._running = True
-            await self.on_open(token)
+            await self.on_open()
+
+    async def resume(self):
+        await self.close()
+        async with anysocks.open_connection(self.url) as con:
+            self._con = con
+            self._running = True
+            payload = {
+                'token': self._token,
+                'session_id': self._session_id,
+                'seq': self._last_sequence
+            }
+            await self._send('RESUME', payload)
+            logger.info("Resuming")
+            await self.on_open()
 
     async def start(self, token: str):
-        await self.connect(token)
+        self._token = token
+        await self.connect()
 
     async def close(self):
         self._running = False

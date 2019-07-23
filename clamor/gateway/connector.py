@@ -65,8 +65,13 @@ class DiscordWebsocketClient:
     def __init__(self, url: str, **kwargs):
         self.url = url
         self.encoder = ENCODERS[kwargs.get('encoding', 'json')]
-        self.zlib_compressed = kwargs.get('zlib_compressed', False)
+        self.zlib_compressed = kwargs.get('zlib_compressed', True)
         self.emitter = Emitter()
+
+        # Compression
+        if self.zlib_compressed:
+            self.buffer = bytearray()
+            self.inflator = zlib.decompressobj()
 
         # Websocket connection
         self._con = None
@@ -99,22 +104,22 @@ class DiscordWebsocketClient:
     async def _receive(self):
         message = await self._con.get_message()
         logger.debug("Received message '{}'".format(message))
-        if self.zlib_compressed:
-            # handle zlib compression here
-            pass
-        else:
-            # As there are special cases where zlib-compressed payloads also occur, even
-            # if zlib-stream wasn't specified in the Gateway url, also try to detect them.
-            is_json = message[0] == '{'
-            is_etf = message[0] == 131
-            if not is_json and not is_etf:
-                message = zlib.decompress(message, 15, self.TEN_MEGABYTES).decode('utf-8')
+
+        if message[0] != '{' and message[0] != 131:
+            self.buffer.extend(message)
+            if len(message) < 4 or message[-4:] != self.ZLIB_SUFFIX:
+                message = self.inflator.decompress(self.buffer).decode()
+            else:
+                return await self._receive()
+
         try:
             message = self.encoder.decode(message)
         except Exception as e:
             raise EncodingError(str(e))
+
         if message.get('s'):
             self._last_sequence = message['s']
+
         logger.debug("Decoded message to '{}'".format(message))
         return message
 
@@ -164,7 +169,10 @@ class DiscordWebsocketClient:
         """
         while self._running:
             message = await self._receive()
-            await self.emitter.emit(message['op'], message['d'], message.get('t'))
+            if 'r'in message:
+                await self.emitter.emit(message['r'], message['d'])
+            else:
+                await self.emitter.emit(message['op'], message['d'])
 
     async def _heartbeat_task(self):
         while self._running:

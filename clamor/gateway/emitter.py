@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
-from enum import Enum, auto
+from enum import Enum
 from inspect import iscoroutinefunction
 from functools import wraps
 from typing import Callable, Coroutine, Union, Any, Dict
@@ -22,9 +22,9 @@ def check_coroutine(func):
 
 
 class Priority(Enum):
-    BEFORE = auto()
-    NORMAL = auto()
-    AFTER = auto()
+    BEFORE = 0
+    NORMAL = 1
+    AFTER = 2
 
 
 class ListenerPod:

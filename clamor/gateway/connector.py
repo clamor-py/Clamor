@@ -73,6 +73,10 @@ class DiscordWebsocketClient:
         self._running = False
         self._tg = None
 
+        # Sharding
+        self.shard_id = kwargs.get('shard_id')
+        self.shard_count = kwargs.get('shard_count')
+
         # Heartbeat stuff
         self._interval = 0
         self._last_sequence = None
@@ -177,6 +181,8 @@ class DiscordWebsocketClient:
             'compress': True,  # i guess?
             'large_threshold': 250,
         }
+        if self.shard_id and self.shard_count:
+            identify['shard'] = [self.shard_id, self.shard_count]
         await self._send('IDENTIFY', identify)
 
     async def on_open(self):

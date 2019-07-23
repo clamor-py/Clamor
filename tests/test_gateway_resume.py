@@ -16,18 +16,26 @@ class GatewayTests(unittest.TestCase):
 
             gw = gateway.DiscordWebsocketClient(url['url'])
             self.assertIsInstance(gw, gateway.DiscordWebsocketClient)
+            reconnected = False
 
-            async def trigger_resume(after):
-                await anyio.sleep(after)
+            async def got_reconnect(data):
+                nonlocal reconnected
+                reconnected = True
+
+            async def trigger_resume(data):
                 await gw.resume()
 
             async def stop_gatway(after):
                 await anyio.sleep(after)
                 await gw.close()
 
+            gw.emitter.add_listener("RECONNECTED", got_reconnect)
+            gw.emitter.add_listener("READY", trigger_resume)
+
             async with anyio.create_task_group() as tg:
                 await tg.spawn(gw.start, os.environ['TEST_BOT_TOKEN'])
-                await tg.spawn(trigger_resume, 5)
                 await tg.spawn(stop_gatway, 10)
+
+            self.assertTrue(reconnected)
 
         anyio.run(main)

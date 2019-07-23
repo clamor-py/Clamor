@@ -91,8 +91,9 @@ class DiscordWebsocketClient:
         self._session_id = 0
         self._token = ""
 
-        self.emitter.add_listener('HELLO', self._on_hello)
-        self.emitter.add_listener('HEARTBEAT_ACK', self._on_heartbeat_ack)
+        self.emitter.add_listener(opcodes['HELLO'], self._on_hello)
+        self.emitter.add_listener(opcodes['HEARTBEAT_ACK'], self._on_heartbeat_ack)
+        self.emitter.add_listener("READY", self._on_ready)
 
         self.format_url()
 
@@ -105,12 +106,13 @@ class DiscordWebsocketClient:
         message = await self._con.get_message()
         logger.debug("Received message '{}'".format(message))
 
-        if message[0] != '{' and message[0] != 131:
+        if self.zlib_compressed:
             self.buffer.extend(message)
-            if len(message) < 4 or message[-4:] != self.ZLIB_SUFFIX:
+            if self.buffer.endswith(self.ZLIB_SUFFIX):
                 message = self.inflator.decompress(self.buffer).decode()
-            else:
-                return await self._receive()
+                self.buffer.clear()
+        elif message[0] != '{' and message[0] != 131:
+            message = zlib.decompress(message, 15, self.TEN_MEGABYTES).decode('utf-8')
 
         try:
             message = self.encoder.decode(message)
@@ -135,16 +137,15 @@ class DiscordWebsocketClient:
         await self._con.send(json.dumps(payload))
 
     async def _on_hello(self, data):
-        self._interval = int(data["heartbeat_interval"])
+        self._interval = data["heartbeat_interval"]
         logger.debug("Found heartbeat interval: {}".format(self._interval))
         await self._tg.spawn(self._heartbeat_task)
 
     async def _on_heartbeat_ack(self, data):
         self._has_ack = True
 
-    async def _on_dispatch(self, data, event):
-        if event == "ready":
-            self._session_id = int(data["session_id"])
+    async def _on_ready(self, data):
+        self._session_id = data["session_id"]
 
     async def _heartbeat(self):
         """|coro|
@@ -169,8 +170,8 @@ class DiscordWebsocketClient:
         """
         while self._running:
             message = await self._receive()
-            if 'r'in message:
-                await self.emitter.emit(message['r'], message['d'])
+            if 't' in message:
+                await self.emitter.emit(message['t'], message['d'])
             else:
                 await self.emitter.emit(message['op'], message['d'])
 

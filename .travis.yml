@@ -23,7 +23,7 @@ script:
   - pylama .
 
   # Unit tests
-  - python setup.py test
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python setup.py test; fi
 
   # Build docs
   - make -C docs html

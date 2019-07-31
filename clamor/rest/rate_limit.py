@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import abc
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import NewType, Tuple, Union
@@ -108,6 +109,44 @@ class CooldownBucket:
         await anyio.sleep(delay)
 
         return delay
+
+
+class BucketStore(abc.ABC):
+    """A bucket store to store buckets.
+
+    This class is used to store RateLimiting buckets.
+    This makes it possible to store buckets in other ways.
+    For example in Redis.
+
+    """
+
+    @abc.abstractmethod
+    def store_bucket(bucket: Bucket):
+        pass
+
+    @abc.abstractmethod
+    def get_bucket(bucket: Bucket) -> CooldownBucket:
+        pass
+
+    @abc.abstractmethod
+    def delete_bucket(bucket: Bucket):
+        pass
+
+    @abc.abstractmethod
+    def has_bucket(bucket: Bucket) -> bool:
+        pass
+
+    def __getitem__(self, bucket: Bucket) -> CooldownBucket:
+        return self.get_bucket(bucket)
+
+    def __setitem__(self, key: Bucket, value: CooldownBucket):
+        self.store_bucket(key, value)
+
+    def __delitem__(self, bucket: Bucket):
+        self.delete_bucket(bucket)
+
+    def __contains__(self, bucket: Bucket) -> bool:
+        return self.has_bucket(bucket)
 
 
 class RateLimiter:

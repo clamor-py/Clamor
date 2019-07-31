@@ -12,7 +12,7 @@ from asks.response_objects import Response
 
 from ..exceptions import RequestFailed, Unauthorized, Forbidden, NotFound
 from ..meta import __url__ as clamor_url, __version__ as clamor_version
-from .rate_limit import Bucket, RateLimiter
+from .rate_limit import Bucket, RateLimiter, InMemoryBucketStore
 from .routes import APIRoute
 
 __all__ = (
@@ -71,7 +71,7 @@ class HTTP:
     def __init__(self, token: str, **kwargs):
         self._token = token
         self._session = kwargs.get('session', asks.Session())
-        self.rate_limiter = RateLimiter()
+        self.rate_limiter = RateLimiter(InMemoryBucketStore())
 
         self._responses = []
         self.headers = {

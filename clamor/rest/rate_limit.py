@@ -159,17 +159,17 @@ class InMemoryBucketStore(BucketStore):
     def __init__(self):
         self._buckets = {}
 
-    def store_bucket(bucket: Bucket):
-        pass
+    def store_bucket(self, key: Bucket, value: CooldownBucket):
+        self._buckets[key] = value
 
-    def get_bucket(bucket: Bucket) -> CooldownBucket:
-        pass
+    def get_bucket(self, bucket: Bucket) -> CooldownBucket:
+        return self._buckets[bucket]
 
-    def delete_bucket(bucket: Bucket):
-        pass
+    def delete_bucket(self, bucket: Bucket):
+        del self._buckets[bucket]
 
-    def has_bucket(bucket: Bucket) -> bool:
-        pass
+    def has_bucket(self, bucket: Bucket) -> bool:
+        return bucket in self._buckets
 
 
 class RateLimiter:

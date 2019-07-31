@@ -121,7 +121,7 @@ class BucketStore(abc.ABC):
     """
 
     @abc.abstractmethod
-    def store_bucket(bucket: Bucket):
+    def store_bucket(key: Bucket, value: CooldownBucket):
         pass
 
     @abc.abstractmethod
@@ -147,6 +147,29 @@ class BucketStore(abc.ABC):
 
     def __contains__(self, bucket: Bucket) -> bool:
         return self.has_bucket(bucket)
+
+
+class InMemoryBucketStore(BucketStore):
+    """A BucketStore which stores the bucket in-memory via a dict
+
+    This bucket store is the default store which will be used by the
+    RateLimiter to store buckets.
+
+    """
+    def __init__(self):
+        self._buckets = {}
+
+    def store_bucket(bucket: Bucket):
+        pass
+
+    def get_bucket(bucket: Bucket) -> CooldownBucket:
+        pass
+
+    def delete_bucket(bucket: Bucket):
+        pass
+
+    def has_bucket(bucket: Bucket) -> bool:
+        pass
 
 
 class RateLimiter:

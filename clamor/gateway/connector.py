@@ -11,7 +11,7 @@ import anysocks.client
 import anyio
 
 from .encoding import ENCODERS
-from .emitter import Emitter
+from clamor.utils import Emitter
 from .opcodes import opcodes
 from .exceptions import *
 
@@ -170,7 +170,7 @@ class DiscordWebsocketClient:
         """
         while self._running:
             message = await self._receive()
-            if 't' in message:
+            if message['op'] == 0:
                 await self.emitter.emit(message['t'], message['d'])
             else:
                 await self.emitter.emit(message['op'], message['d'])
@@ -228,7 +228,10 @@ class DiscordWebsocketClient:
             await self.on_open()
 
     async def resume(self):
-        await self.close()
+        if self._running:
+            await self.close()
+
+        logger.info("Resuming")
         async with anysocks.open_connection(self.url) as con:
             self._con = con
             self._running = True
@@ -238,7 +241,6 @@ class DiscordWebsocketClient:
                 'seq': self._last_sequence
             }
             await self._send('RESUME', payload)
-            logger.info("Resuming")
             await self.on_open()
 
     async def start(self, token: str):

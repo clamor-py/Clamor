@@ -23,18 +23,19 @@ class GatewayTests(unittest.TestCase):
                 reconnected = True
 
             async def trigger_resume(data):
+                await anyio.sleep(5)
                 await gw.resume()
 
             async def stop_gatway(after):
                 await anyio.sleep(after)
                 await gw.close()
 
-            gw.emitter.add_listener("RECONNECTED", got_reconnect)
+            gw.emitter.add_listener("RESUMED", got_reconnect)
             gw.emitter.add_listener("READY", trigger_resume)
 
             async with anyio.create_task_group() as tg:
                 await tg.spawn(gw.start, os.environ['TEST_BOT_TOKEN'])
-                await tg.spawn(stop_gatway, 10)
+                await tg.spawn(stop_gatway, 90)
 
             self.assertTrue(reconnected)
 

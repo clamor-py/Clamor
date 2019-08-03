@@ -10,7 +10,7 @@ import anyio
 from clamor import RateLimiter
 
 
-class RateLimitTests(unittest.TestCase):
+class HTTPTests(unittest.TestCase):
     def test_rate_limiter(self):
         async def main():
             limiter = RateLimiter()

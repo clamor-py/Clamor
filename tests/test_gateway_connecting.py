@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import unittest
 import os
+import unittest
 
 import anyio
 
@@ -12,25 +12,26 @@ class GatewayTests(unittest.TestCase):
     def gateway_connect(self, compressed: bool):
         async def main():
             http = HTTP(os.environ['TEST_BOT_TOKEN'])
-            url = await http.make_request(Routes.GET_GATEWAY)
+            url = await http.make_request(Routes.GET_GATEWAY_BOT)
 
-            gw = gateway.DiscordWebsocketClient(url['url'], zlib_compressed=compressed)
+            gw = gateway.DiscordWebsocketClient(url['url'], shard_id=0, shard_count=1,
+                                                zlib_compressed=compressed)
             connected = False
             self.assertIsInstance(gw, gateway.DiscordWebsocketClient)
 
-            async def set_connected(data):
+            async def set_connected(_):
                 nonlocal connected
                 connected = True
 
-            gw.emitter.add_listener("READY", set_connected)
+            gw.emitter.add_listener(gateway.Opcode.DISPATCH, set_connected)
 
-            async def stop_gatway(after):
+            async def stop_gateway(after):
                 await anyio.sleep(after)
                 await gw.close()
 
             async with anyio.create_task_group() as tg:
                 await tg.spawn(gw.start, os.environ['TEST_BOT_TOKEN'])
-                await tg.spawn(stop_gatway, 10)
+                await tg.spawn(stop_gateway, 10)
 
             self.assertTrue(connected)
 

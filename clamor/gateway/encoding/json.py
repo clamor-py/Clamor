@@ -4,10 +4,13 @@ try:
     import ujson as json
 except ImportError:
     import json
-
 from wsproto.frame_protocol import Opcode
 
 from .base import BaseEncoder
+
+__all__ = (
+    'JSONEncoder',
+)
 
 
 class JSONEncoder(BaseEncoder):

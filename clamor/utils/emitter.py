@@ -142,7 +142,7 @@ class Emitter:
             The op code or event to listen too
         listener : Coroutine
             A coroutine to be triggered on it's respective event
-        order : :class `clamor.gateway.emitter.Priority`
+        order : :class:`clamor.gateway.emitter.Priority`
             The order this listener should be triggered in
         """
 

@@ -10,6 +10,15 @@ import anyio
 from async_generator import async_generator, asynccontextmanager, yield_
 from asks.response_objects import Response
 
+import base4
+import json
+
+try:
+    import redis
+    INCLUDE_REDIS = True
+except ModuleNotFoundError:
+    INCLUDE_REDIS = False
+
 __all__ = (
     'Bucket',
     'CooldownBucket',
@@ -171,6 +180,36 @@ class InMemoryBucketStore(BucketStore):
 
     def has_bucket(self, bucket: Bucket) -> bool:
         return bucket in self._buckets
+
+
+if INCLUDE_REDIS:
+    class RedisBucketStore(BucketStore):
+        """A bucket store which stores the bucket in a redis database.
+
+        This class is only available if you have [redis-py](https://pypi.org/project/redis/)
+        installed.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Look at the [redis-py](https://pypi.org/project/redis/)
+            documentation to see all Keyowrd arguments
+        """
+
+        def __init__(self, **kwargs):
+            self.redis_client = redis.Redis(**kwargs)
+
+        def store_bucket(self, key: Bucket, value: CooldownBucket):
+            pass
+
+        def get_bucket(self, bucket: Bucket) -> CooldownBucket:
+            pass
+
+        def delete_bucket(self, bucket: Bucket):
+            pass
+
+        def has_bucket(self, bucket: Bucket) -> bool:
+            pass
 
 
 class RateLimiter:

@@ -71,7 +71,7 @@ class HTTP:
     def __init__(self, token: str, **kwargs):
         self._token = token
         self._session = kwargs.get('session', asks.Session())
-        self.rate_limiter = RateLimiter(InMemoryBucketStore())
+        self.rate_limiter = RateLimiter()
 
         self._responses = []
         self.headers = {

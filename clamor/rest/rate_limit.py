@@ -225,8 +225,8 @@ class RateLimiter:
         Separate lock for global rate limits.
     """
 
-    def __init__(self, bucket_store):
-        self._buckets = bucket_store or InMemoryBucketStore()
+    def __init__(self):
+        self._buckets = InMemoryBucketStore()
         self.global_lock = anyio.create_lock()
 
     @asynccontextmanager

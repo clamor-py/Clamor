@@ -47,6 +47,9 @@ class HTTP:
     app : str
         The application type for the ``Authorization`` header.
         Either ``Bot`` or ``Bearer``, defaults to ``Bot``.
+    bucket_store: :class:`~clamor.rest.rate_limit.BucketStore`
+        The bucket store which will be used by the RateLimiter.
+        If no bucket store is provided, the RateLimiter will store the buckets in memory.
 
     Attributes
     ----------
@@ -71,7 +74,7 @@ class HTTP:
     def __init__(self, token: str, **kwargs):
         self._token = token
         self._session = kwargs.get('session', asks.Session())
-        self.rate_limiter = RateLimiter()
+        self.rate_limiter = RateLimiter(kwargs.get('bucket_store'))
 
         self._responses = []
         self.headers = {

@@ -156,6 +156,7 @@ class InMemoryBucketStore(BucketStore):
     RateLimiter to store buckets.
 
     """
+
     def __init__(self):
         self._buckets = {}
 
@@ -181,7 +182,8 @@ class RateLimiter:
     can be used for that. It can also be used as an async
     contextmanager.
 
-    Buckets are stored in a dictionary as literal bucket and
+    Buckets are stored in the bucket store passed in the constructor.
+    If no bucket store is specified, the buckets are stored in memory.
     :class:`~clamor.rest.rate_limit.CooldownBucket` objects.
 
     .. code-block:: python3

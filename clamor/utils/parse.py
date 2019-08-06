@@ -27,3 +27,10 @@ def check_username(username: str) -> Optional[str]:
         raise ValueError('Usernames must not contain "@", "#", ":" or "```"')
 
     return username.strip()
+
+
+def check_webhook_name(name: str) -> Optional[str]:
+        if 2 > len(name) > 32:
+            raise ValueError('Name must be between 2 and 32 characters long')
+
+        return name.strip()

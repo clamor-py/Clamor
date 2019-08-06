@@ -1,15 +1,6 @@
-# -*- coding: utf-8 -*-
-
 from enum import IntEnum
-from typing import Union
 
-from ..routes import Routes
-from .base import *
-
-__all__ = (
-    'AuditLogAction',
-    'AuditLogWrapper',
-)
+from .base import Base
 
 
 class AuditLogAction(IntEnum):
@@ -79,29 +70,6 @@ class AuditLogAction(IntEnum):
     MESSAGE_DELETE = 72
 
 
-class AuditLogWrapper(EndpointsWrapper):
-    """A higher-level wrapper around Audit Log endpoints.
+class AuditLog(Base):
 
-    .. seealso:: Audit Log endpoints https://discordapp.com/developers/docs/resources/audit-log
-    """
-
-    def __init__(self, token: str, guild_id: Snowflake):
-        super().__init__(token)
-
-        self.guild_id = guild_id
-
-    async def get_guild_audit_log(self,
-                                  user_id: Snowflake,
-                                  action_type: Union[AuditLogAction, int] = None,
-                                  before: Snowflake = None,
-                                  limit: int = 50) -> dict:
-        params = optional(**{
-            'user_id': user_id,
-            'action_type': action_type if isinstance(action_type, int) else action_type.value,
-            'before': before,
-            'limit': limit,
-        })
-
-        return await self.http.make_request(Routes.GET_GUILD_AUDIT_LOG,
-                                            dict(guild=self.guild_id),
-                                            params=params)
+    pass

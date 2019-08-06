@@ -36,10 +36,9 @@ class Base(metaclass=BaseMeta):
     API_CLASS = None
     API_ID = None
 
-    def __init__(self, source: Dict[str, Any], token: str):
+    def __init__(self, source: Dict[str, Any], client):
         self.source = source
-        self._api = self.API_CLASS(token) if self.API_ID is None else \
-            self.API_CLASS(token, self.source[self.API_ID])
+        self.client = client
 
     def __getattr__(self, item: str):
         value = super().__getattribute__(item)

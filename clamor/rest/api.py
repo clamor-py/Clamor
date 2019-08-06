@@ -10,9 +10,9 @@ from clamor.models.guild import Ban, Integration, Guild, GuildEmbed, Member, Rol
 from clamor.models.invite import Invite
 from clamor.models.message import Message
 from clamor.models.snowflake import Snowflake
-from clamor.models.user import User
+from clamor.models.user import Connection, User
 from clamor.models.voice import VoiceRegion
-from clamor.utils.parse import parse_emoji
+from clamor.utils.parse import parse_emoji, check_username
 from .http import HTTP
 from .routes import Routes
 
@@ -819,5 +819,69 @@ class ClamorAPI:
 
     async def get_current_application_info(self) -> dict:
         return await self.http.make_request(Routes.GET_CURRENT_APPLICATION_INFO)
+
+    @cast_to(User)
+    async def get_current_user(self) -> User:
+        return await self.http.make_request(Routes.GET_CURRENT_USER)
+
+    @cast_to(User)
+    async def get_user(self, user_id: Snowflake) -> User:
+        return await self.http.make_request(Routes.GET_USER,
+                                            dict(user=user_id))
+
+    @cast_to(User)
+    async def modify_current_user(self, username: str = None, avatar: str = None) -> User:
+        params = optional(**{
+            'username': check_username(username),
+            'avatar': avatar
+        })
+
+        return await self.http.make_request(Routes.MODIFY_CURRENT_USER,
+                                            json=params)
+
+    @cast_to(Guild)
+    async def get_current_user_guilds(self,
+                                      before: Snowflake = None,
+                                      after: Snowflake = None,
+                                      limit: int = 100) -> List[Guild]:
+        params = optional(**{
+            'before': before,
+            'after': after,
+            'limit': limit
+        })
+
+        return await self.http.make_request(Routes.GET_CURRENT_USER_GUILDS,
+                                            params=params)
+
+    async def leave_guild(self, guild_id: Snowflake):
+        return await self.http.make_request(Routes.LEAVE_GUILD,
+                                            dict(guild=guild_id))
+
+    @cast_to(Channel)
+    async def get_user_dms(self) -> List[Channel]:
+        return await self.http.make_request(Routes.GET_USER_DMS)
+
+    @cast_to(Channel)
+    async def create_dm(self, recipient_id: Snowflake) -> Channel:
+        return await self.http.make_request(Routes.CREATE_DM,
+                                            json={'recipient_id': recipient_id})
+
+    @cast_to(Channel)
+    async def create_group_dm(self, access_tokens: List[str], nicks: dict) -> Channel:
+        params = {
+            'access_tokens': access_tokens,
+            'nicks': nicks,
+        }
+
+        return await self.http.make_request(Routes.CREATE_GROUP_DM,
+                                            json=params)
+
+    @cast_to(Connection)
+    async def get_user_connections(self) -> List[Connection]:
+        return await self.http.make_request(Routes.GET_USER_CONNECTIONS)
+
+    @cast_to(VoiceRegion)
+    async def list_voice_regions(self) -> List[VoiceRegion]:
+        return await self.http.make_request(Routes.LIST_VOICE_REGIONS)
 
 

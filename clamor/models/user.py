@@ -122,3 +122,7 @@ class User(Base):
 
     def dm(self):
         pass  # TODO: Finish when channels are added
+
+
+class Connection(Base):
+    pass

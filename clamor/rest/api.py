@@ -1,14 +1,17 @@
 import json
 from functools import wraps
-from typing import Union, Type, List
+from typing import Union, Type, List, Optional
 
 from clamor.models.audit_log import AuditLog, AuditLogAction
 from clamor.models.base import Base
 from clamor.models.channel import Channel
+from clamor.models.emoji import Emoji
+from clamor.models.guild import Ban, Integration, Guild, GuildEmbed, Member, Role
 from clamor.models.invite import Invite
 from clamor.models.message import Message
 from clamor.models.snowflake import Snowflake
 from clamor.models.user import User
+from clamor.models.voice import VoiceRegion
 from clamor.utils.parse import parse_emoji
 from .http import HTTP
 from .routes import Routes
@@ -33,7 +36,8 @@ def cast_to(model: Type[Base]):
             result = await func(self, *args, **kwargs)
             if isinstance(result, list):
                 return [model(r, self.client) for r in result]
-            return model(result, self.client)
+            if isinstance(result, dict):
+                return model(result, self.client)
         return wrapper
     return func_wrap
 
@@ -340,3 +344,465 @@ class ClamorAPI:
     async def group_dm_remove_recipient(self, channel_id: Snowflake, user_id: Snowflake):
         return await self.http.make_request(Routes.GROUP_DM_REMOVE_RECIPIENT,
                                             dict(channel=channel_id, user=user_id))
+
+    @cast_to(Emoji)
+    async def list_guild_emojis(self, guild_id: Snowflake) -> List[Emoji]:
+        return await self.http.make_request(Routes.LIST_GUILD_EMOJIS,
+                                            dict(guild=guild_id))
+
+    @cast_to(Emoji)
+    async def get_guild_emoji(self, guild_id: Snowflake, emoji_id: Snowflake) -> Emoji:
+        return await self.http.make_request(Routes.GET_GUILD_EMOJI,
+                                            dict(guild=guild_id, emoji=emoji_id))
+
+    @cast_to(Emoji)
+    async def create_guild_emoji(self,
+                                 guild_id: Snowflake,
+                                 name: str,
+                                 image: str,
+                                 roles: list,
+                                 reason: str = None) -> Emoji:
+        params = {
+            'name': name,
+            'image': image,
+            'roles': roles
+        }
+
+        return await self.http.make_request(Routes.CREATE_GUILD_EMOJI,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    @cast_to(Emoji)
+    async def modify_guild_emoji(self,
+                                 guild_id: Snowflake,
+                                 emoji_id: Snowflake,
+                                 name: str = None,
+                                 roles: list = None,
+                                 reason: str = None) -> Emoji:
+        params = optional(**{
+            'name': name,
+            'roles': roles
+        })
+
+        return await self.http.make_request(Routes.MODIFY_GUILD_EMOJI,
+                                            dict(guild=guild_id, emoji=emoji_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def delete_guild_emoji(self,
+                                 guild_id: Snowflake,
+                                 emoji_id: Snowflake,
+                                 reason: str = None):
+        return await self.http.make_request(Routes.DELETE_GUILD_EMOJI,
+                                            dict(guild=guild_id, emoji=emoji_id),
+                                            reason=reason)
+
+    async def get_gateway(self) -> dict:
+        return await self.http.make_request(Routes.GET_GATEWAY)
+
+    async def get_gateway_bot(self) -> dict:
+        return await self.http.make_request(Routes.GET_GATEWAY_BOT)
+
+    @cast_to(Guild)
+    async def create_guild(self,
+                           name: str,
+                           region: str,
+                           icon: str,
+                           verification_level: int,
+                           default_message_notifications: int,
+                           explicit_content_filter: int,
+                           roles: list,
+                           channels: list) -> Guild:
+        params = {
+            "name": name,
+            "region": region,
+            "icon": icon,
+            "verification_level": verification_level,
+            "default_message_notifications": default_message_notifications,
+            "explicit_content_filter": explicit_content_filter,
+            "roles": roles,
+            "channels": channels
+        }
+
+        return await self.http.make_request(Routes.CREATE_GUILD,
+                                            json=params)
+
+    @cast_to(Guild)
+    async def get_guild(self, guild_id: Snowflake) -> Guild:
+        return await self.http.make_request(Routes.GET_GUILD,
+                                            dict(guild=guild_id))
+
+    @cast_to(Guild)
+    async def modify_guild(self,
+                           guild_id: Snowflake,
+                           name: str = None,
+                           region: str = None,
+                           verification_level: int = None,
+                           default_message_notifications: int = None,
+                           explicit_content_filter: int = None,
+                           afk_channel_id: Snowflake = None,
+                           afk_timout: int = None,
+                           icon: str = None,
+                           owner_id: Snowflake = None,
+                           splash: str = None,
+                           system_channel_id: Snowflake = None,
+                           reason: str = None) -> Guild:
+        params = optional(**{
+            "name": name,
+            "region": region,
+            "verification_level": verification_level,
+            "default_message_notifications": default_message_notifications,
+            "explicit_content_filter": explicit_content_filter,
+            "afk_channel_id": afk_channel_id,
+            "afk_timeout": afk_timout,
+            "icon": icon,
+            "owner_id": owner_id,
+            "splash": splash,
+            "system_channel_id": system_channel_id
+        })
+
+        return await self.http.make_request(Routes.MODIFY_GUILD,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def delete_guild(self, guild_id: Snowflake):
+        return await self.http.make_request(Routes.DELETE_GUILD,
+                                            dict(guild=guild_id))
+
+    @cast_to(Channel)
+    async def get_guild_channels(self, guild_id: Snowflake) -> list:
+        return await self.http.make_request(Routes.GET_GUILD_CHANNELS,
+                                            dict(guild=guild_id))
+
+    @cast_to(Channel)
+    async def create_guild_channel(self,
+                                   guild_id: Snowflake,
+                                   name: str,
+                                   channel_type: int = None,
+                                   topic: str = None,
+                                   bitrate: int = None,
+                                   user_limit: int = None,
+                                   rate_limit_per_user: int = None,
+                                   position: int = None,
+                                   permission_overwrites: list = None,
+                                   parent_id: Snowflake = None,
+                                   reason: str = None) -> dict:
+        params = optional(**{
+            "name": name,
+            "channel_type": channel_type,
+            "topic": topic,
+            "bitrate": bitrate,
+            "user_limit": user_limit,
+            "rate_limit_per_user": rate_limit_per_user,
+            "position": position,
+            "permission_overwrites": permission_overwrites,
+            "parent_id": parent_id
+        })
+
+        return await self.http.make_request(Routes.CREATE_GUILD_CHANNEL,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def modify_guild_channel_positions(self, guild_id: Snowflake, channels: List[dict]):
+        return await self.http.make_request(Routes.MODIFY_GUILD_CHANNEL_POSITIONS,
+                                            dict(guild=guild_id),
+                                            json=channels)
+
+    @cast_to(Member)
+    async def get_guild_member(self, guild_id: Snowflake, user_id: Snowflake) -> Member:
+        return await self.http.make_request(Routes.GET_GUILD_MEMBER,
+                                            dict(guild=guild_id, member=user_id))
+
+    @cast_to(Member)
+    async def list_guild_members(self,
+                                 guild_id: Snowflake,
+                                 limit: int = None,
+                                 after: Snowflake = None) -> List[Member]:
+        params = optional(**{
+            "limit": limit,
+            "after": after
+        })
+
+        return await self.http.make_request(Routes.LIST_GUILD_MEMBERS,
+                                            dict(guild=guild_id),
+                                            json=params)
+
+    @cast_to(Member)
+    async def add_guild_member(self,
+                               guild_id: Snowflake,
+                               user_id: Snowflake,
+                               access_token: str,
+                               nick: str = None,
+                               roles: list = None,
+                               mute: bool = None,
+                               deaf: bool = None) -> Member:
+        params = optional(**{
+            "access_token": access_token,
+            "nick": nick,
+            "roles": roles,
+            "mute": mute,
+            "deaf": deaf
+        })
+
+        return await self.http.make_request(Routes.ADD_GUILD_MEMBER,
+                                            dict(guild=guild_id, member=user_id),
+                                            json=params)
+
+    async def modify_guild_member(self,
+                                  guild_id: Snowflake,
+                                  user_id: Snowflake,
+                                  nick: str = None,
+                                  roles: list = None,
+                                  mute: bool = None,
+                                  deaf: bool = None,
+                                  channel_id: Snowflake = None,
+                                  reason: str = None):
+        params = optional(**{
+            "nick": nick,
+            "roles": roles,
+            "mute": mute,
+            "deaf": deaf,
+            "channel_id": channel_id
+        })
+
+        return await self.http.make_request(Routes.MODIFY_GUILD_MEMBER,
+                                            dict(guild=guild_id, member=user_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def modify_current_user_nick(self, guild_id: Snowflake,
+                                       nick: str, reason: str = None) -> str:
+        params = {
+            "nick": nick
+        }
+
+        resp = await self.http.make_request(Routes.MODIFY_CURRENT_USER_NICK,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+        return resp['nick']
+
+    async def add_guild_member_role(self,
+                                    guild_id: Snowflake,
+                                    user_id: Snowflake,
+                                    role_id: Snowflake,
+                                    reason: str = None):
+        return await self.http.make_request(Routes.ADD_GUILD_MEMBER_ROLE,
+                                            dict(guild=guild_id, member=user_id, role=role_id),
+                                            reason=reason)
+
+    async def remove_guild_member_role(self,
+                                       guild_id: Snowflake,
+                                       user_id: Snowflake,
+                                       role_id: Snowflake,
+                                       reason: str = None):
+        return await self.http.make_request(Routes.REMOVE_GUILD_MEMBER_ROLE,
+                                            dict(guild=guild_id, member=user_id, role=role_id),
+                                            reason=reason)
+
+    async def remove_guild_member(self, guild_id: Snowflake,
+                                  user_id: Snowflake, reason: str = None):
+        return await self.http.make_request(Routes.REMOVE_GUILD_MEMBER,
+                                            dict(guild=guild_id, member=user_id),
+                                            reason=reason)
+
+    @cast_to(Ban)
+    async def get_guild_bans(self, guild_id: Snowflake) -> List[Ban]:
+        return await self.http.make_request(Routes.GET_GUILD_BANS,
+                                            dict(guild=guild_id))
+
+    @cast_to(Ban)
+    async def get_guild_ban(self, guild_id: Snowflake, user_id: Snowflake) -> Ban:
+        return await self.http.make_request(Routes.GET_GUILD_BAN,
+                                            dict(guild=guild_id, user=user_id))
+
+    async def create_guild_ban(self,
+                               guild_id: Snowflake,
+                               user_id: Snowflake,
+                               delete_message_days: int = None,
+                               reason: str = None):
+        params = optional(**{
+            "delete_message_days": delete_message_days,
+            "reason": reason
+        })
+
+        return await self.http.make_request(Routes.CREATE_GUILD_BAN,
+                                            dict(guild=guild_id, user=user_id),
+                                            json=params)
+
+    async def remove_guild_ban(self, guild_id: Snowflake, user_id: Snowflake, reason: str = None):
+        return await self.http.make_request(Routes.REMOVE_GUILD_BAN,
+                                            dict(guild=guild_id, user=user_id),
+                                            reason=reason)
+
+    @cast_to(Role)
+    async def get_guild_roles(self, guild_id: Snowflake) -> Role:
+        return await self.http.make_request(Routes.GET_GUILD_ROLES,
+                                            dict(guild=guild_id))
+
+    @cast_to(Role)
+    async def create_guild_role(self,
+                                guild_id: Snowflake,
+                                name: str = None,
+                                permissions: int = None,
+                                color: int = None,
+                                hoist: bool = None,
+                                mentionable: bool = None,
+                                reason: str = None) -> Role:
+        params = optional(**{
+            "name": name,
+            "permissions": permissions,
+            "color": color,
+            "hoist": hoist,
+            "mentionable": mentionable
+        })
+
+        return await self.http.make_request(Routes.CREATE_GUILD_ROLE,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    @cast_to(Role)
+    async def modify_guild_role_positions(self, guild_id: Snowflake,
+                                          roles: List[dict], reason: str = None) -> List[Role]:
+        return await self.http.make_request(Routes.MODIFY_GUILD_ROLE_POSITIONS,
+                                            dict(guild=guild_id),
+                                            json=roles,
+                                            reason=reason)
+
+    @cast_to(Role)
+    async def modify_guild_role(self,
+                                guild_id: Snowflake,
+                                role_id: Snowflake,
+                                name: str = None,
+                                permissions: int = None,
+                                color: int = None,
+                                hoist: bool = None,
+                                mentionable: bool = None,
+                                reason: str = None) -> Role:
+        params = optional(**{
+            "name": name,
+            "permissions": permissions,
+            "color": color,
+            "hoist": hoist,
+            "mentionable": mentionable
+        })
+
+        return await self.http.make_request(Routes.MODIFY_GUILD_ROLE,
+                                            dict(guild=guild_id, role=role_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def delete_guild_role(self, guild_id: Snowflake, role_id: Snowflake, reason: str = None):
+        return await self.http.make_request(Routes.DELETE_GUILD_ROLE,
+                                            dict(guild=guild_id, role=role_id),
+                                            reason=reason)
+
+    async def get_guild_prune_count(self, guild_id: Snowflake, days: int = None) -> int:
+        params = optional(**{"days": days})
+        resp = await self.http.make_request(Routes.GET_GUILD_PRUNE_COUNT,
+                                            dict(guild=guild_id),
+                                            json=params)
+        return resp['pruned']
+
+    async def begin_guild_prune(self,
+                                guild_id: Snowflake,
+                                days: int = None,
+                                compute_prune_count: bool = None) -> Optional[int]:
+        params = {
+            "days": days,
+            "compute_prune_count": compute_prune_count
+        }
+
+        resp = await self.http.make_request(Routes.BEGIN_GUILD_PRUNE,
+                                            dict(guild=guild_id),
+                                            json=params)
+        return resp['pruned']
+
+    @cast_to(VoiceRegion)
+    async def get_guild_voice_regions(self, guild_id: Snowflake) -> List[VoiceRegion]:
+        return await self.http.make_request(Routes.GET_GUILD_VOICE_REGIONS,
+                                            dict(guild=guild_id))
+
+    @cast_to(Invite)
+    async def get_guild_invites(self, guild_id: Snowflake) -> List[Invite]:
+        return await self.http.make_request(Routes.GET_GUILD_INVITES,
+                                            dict(guild=guild_id))
+
+    @cast_to(Integration)
+    async def get_guild_integrations(self, guild_id: Snowflake) -> List[Integration]:
+        return await self.http.make_request(Routes.GET_GUILD_INTEGRATIONS,
+                                            dict(guild=guild_id))
+
+    async def create_guild_integration(self,
+                                       guild_id: Snowflake,
+                                       int_type: str,
+                                       int_id: Snowflake,
+                                       reason: str = None):
+        params = {
+            "type": int_type,
+            "id": int_id
+        }
+
+        return await self.http.make_request(Routes.CREATE_GUILD_INTEGRATION,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def modify_guild_integration(self,
+                                       guild_id: Snowflake,
+                                       integration_id: Snowflake,
+                                       expire_behavior: int,
+                                       expire_grace_period: int,
+                                       enable_emoticons: bool,
+                                       reason: str = None):
+        params = {
+            "expire_behavior": expire_behavior,
+            "expire_grace_period": expire_grace_period,
+            "enable_emoticons": enable_emoticons
+        }
+
+        return await self.http.make_request(Routes.MODIFY_GUILD_INTEGRATION,
+                                            dict(guild=guild_id, integration=integration_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def delete_guild_integration(self, guild_id: Snowflake,
+                                       integration_id: Snowflake, reason: str = None):
+        return await self.http.make_request(Routes.DELETE_GUILD_INTEGRATION,
+                                            dict(guild=guild_id, integration=integration_id),
+                                            reason=reason)
+
+    async def sync_guild_integration(self, guild_id: Snowflake, integration_id: Snowflake):
+        return await self.http.make_request(Routes.SYNC_GUILD_INTEGRATION,
+                                            dict(guild=guild_id, integration=integration_id))
+
+    @cast_to(GuildEmbed)
+    async def get_guild_embed(self, guild_id: Snowflake) -> GuildEmbed:
+        return await self.http.make_request(Routes.GET_GUILD_EMBED,
+                                            dict(guild=guild_id))
+
+    @cast_to(GuildEmbed)
+    async def modify_guild_embed(self,
+                                 guild_id: Snowflake,
+                                 enabled: bool,
+                                 channel_id: Snowflake,
+                                 reason: str = None) -> GuildEmbed:
+        params = {
+            "enabled": enabled,
+            "channel_id": channel_id
+        }
+
+        return await self.http.make_request(Routes.MODIFY_GUILD_EMBED,
+                                            dict(guild=guild_id),
+                                            json=params,
+                                            reason=reason)
+
+    async def get_guild_vanity_url(self, guild_id: Snowflake) -> bytes:
+        return await self.http.make_request(Routes.GET_GUILD_VANITY_URL,
+                                            dict(guild=guild_id))
+
+

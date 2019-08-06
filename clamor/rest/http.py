@@ -99,15 +99,17 @@ class HTTP:
         return self._responses
 
     @staticmethod
-    def _parse_response(response: Response) -> Optional[Union[dict, list, str]]:
+    def _parse_response(response: Response) -> Optional[Union[dict, list, str, bytes]]:
         if response.headers['Content-Type'] == 'application/json':
             return response.json(encoding='utf-8')
+        if response.headers['Content-Type'].startswith("image"):
+            return response.content
         return response.text.encode('utf-8')
 
     async def make_request(self,
                            route: APIRoute,
                            fmt: dict = None,
-                           **kwargs) -> Optional[Union[dict, list, str]]:
+                           **kwargs) -> Optional[Union[dict, list, str, bytes]]:
         r"""Makes a request to a given route with a set of arguments.
 
         It also handles rate limits, non-success status codes and
@@ -204,7 +206,7 @@ class HTTP:
 
     async def parse_response(self,
                              bucket: Bucket,
-                             response: Response) -> Optional[Union[dict, list, str]]:
+                             response: Response) -> Optional[Union[dict, list, str, bytes]]:
         """Parses a given response and handles non-success status codes.
 
         Parameters

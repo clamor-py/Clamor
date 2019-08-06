@@ -805,4 +805,19 @@ class ClamorAPI:
         return await self.http.make_request(Routes.GET_GUILD_VANITY_URL,
                                             dict(guild=guild_id))
 
+    @cast_to(Invite)
+    async def get_invite(self, invite_code: str, with_counts: bool = False) -> Invite:
+        return await self.http.make_request(Routes.GET_INVITE,
+                                            dict(invite=invite_code),
+                                            params=optional(**{'with_counts': with_counts}))
+
+    @cast_to(Invite)
+    async def delete_invite(self, invite_code: str, reason: str = None) -> Invite:
+        return await self.http.make_request(Routes.DELETE_INVITE,
+                                            dict(invite=invite_code),
+                                            reason=reason)
+
+    async def get_current_application_info(self) -> dict:
+        return await self.http.make_request(Routes.GET_CURRENT_APPLICATION_INFO)
+
 

@@ -2,7 +2,12 @@ from collections import deque
 from typing import Callable
 from weakref import WeakValueDictionary
 
-from clamor import Base
+from ..models import Base
+
+__all__ = (
+    'Cache',
+    'CacheCategory',
+)
 
 
 class CacheCategory:

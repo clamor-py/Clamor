@@ -71,5 +71,4 @@ class AuditLogAction(IntEnum):
 
 
 class AuditLog(Base):
-
     pass

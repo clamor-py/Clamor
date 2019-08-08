@@ -1,5 +1,7 @@
 from enum import Enum
-from typing import Any, Callable, Dict, Type, Tuple
+from typing import Any, Callable, Dict, Type, Tuple, Union
+
+from .snowflake import Snowflake
 
 
 class Field:
@@ -29,16 +31,17 @@ class BaseMeta(type):
         for name, field in clsattrs.items():
             if isinstance(field, Field):
                 field.set_name(name)
+        return super().__new__(mcs, name, bases, clsattrs)
 
 
 class Base(metaclass=BaseMeta):
 
-    API_CLASS = None
-    API_ID = None
-
     def __init__(self, source: Dict[str, Any], client):
+        self.name_ = self.__class__.__name__
         self.source = source
         self.client = client
+        if self.id is not None:
+            self.client.cache.active[self.__class__.__name__][self.id] = self
 
     def __getattr__(self, item: str):
         value = super().__getattribute__(item)
@@ -54,4 +57,10 @@ class Flags(Enum):
         return tuple(a for a in cls if flags & a.value)
 
 
+Snowflakable = Union[str, int, Base]
 
+
+def snowflakify(obj: Snowflakable):
+    if isinstance(obj, Base):
+        return obj.id
+    return Snowflake(obj)

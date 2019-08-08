@@ -1,6 +1,5 @@
 from enum import Enum
 
-from clamor.rest.endpoints import UserWrapper
 from .base import Base, Field, Flags
 from .snowflake import Snowflake
 
@@ -62,9 +61,8 @@ class User(Base):
     mention : str
         A string containing the user as a mention
     name : str
-        The username and discriinator combined with a '#'
+        The username and discriminator combined with a '#'
     """
-    API_CLASS = UserWrapper
 
     id = Field(Snowflake)  # type: Snowflake
     username = Field(str)  # type: str
@@ -121,8 +119,54 @@ class User(Base):
         return AVATAR_URL.format(self.id, self.avatar, "webp", size)
 
     def dm(self):
-        pass  # TODO: Finish when channels are added
+        """
+        Create direct message
+
+        Create a direct message with a user, and return a new channel to represent the conversation.
+
+        Returns
+        -------
+        :class:`clamor.models.channel.Channel`
+            A new DM channel object
+        """
+        return self.client.api.create_dm(self.id)
+
+
+class Visibility(Enum):
+    INVISIBLE = 0
+    VISIBLE = 1
 
 
 class Connection(Base):
-    pass
+    """
+    User connections
+
+    Other accounts the user controls, such as youtube, twitch, spotify, etc.
+
+    Attributes
+    ----------
+    id : str
+        The ID of the account
+    name : str
+        The name of the account
+    type : str
+        The name of the service (youtube, twitch, etc)
+    revoked : bool
+        Whether the connect if revoked
+    verified : bool
+        Whether the user proved it's their account
+    friend_sync : bool
+        Whether friend sync is enabled
+    show_activity : bool
+        Whether changes on this activity will appear on presence updates
+    visibility : :class:`clamor.models.user.Visibility`
+        Whether only this user can view the connection
+    """
+    id = Field(str)
+    name = Field(str)
+    type = Field(str)
+    revoked = Field(bool)
+    verified = Field(bool)
+    friend_sync = Field(bool)
+    show_activity = Field(bool)
+    visibility = Field(Visibility)

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from enum import Enum
-
-from .base import Base, Field, Flags
+from .base import Base, Field
 from .snowflake import Snowflake
+from .solo import PremiumType, UserFlags, Visibility
 
 __all__ = (
     'AVATAR_URL',
@@ -17,24 +16,6 @@ __all__ = (
 
 DEFAULT_AVATAR_URL = 'https://cdn.discordapp.com/embed/avatars/{}.png'
 AVATAR_URL = 'https://cdn.discordapp.com/avatars/{}/{}.{}?size={}'
-
-
-class UserFlags(Flags):
-    DISCORD_EMPLOYEE = 1
-    DISCORD_PARTNER = 2
-    HYPESQUAD_EVENTS = 4
-    BUG_HUNTER = 8
-    HOUSE_BRAVERY = 16
-    HOUSE_BRILLIANCE = 32
-    HOUSE_BALANCE = 64
-    EARLY_SUPPORTER = 128
-    TEAM_USER = 256
-
-
-class PremiumType(Enum):
-    DEFAULT = 0
-    NITRO_CLASSIC = 1
-    NITRO = 2
 
 
 class User(Base):
@@ -137,12 +118,7 @@ class User(Base):
         :class:`clamor.models.channel.Channel`
             A new DM channel object
         """
-        return self.__client.api.create_dm(self.id)
-
-
-class Visibility(Enum):
-    INVISIBLE = 0
-    VISIBLE = 1
+        return self._client.api.create_dm(self.id)
 
 
 class Connection(Base):

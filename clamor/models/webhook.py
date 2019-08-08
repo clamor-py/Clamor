@@ -48,11 +48,11 @@ class Webhook(Base):
 
     @property
     def guild(self):
-        return self.__client.cache.get("Guild", self.guild_id)
+        return self._client.cache.get("Guild", self.guild_id)
 
     @property
     def channel(self):
-        return self.__client.cache.get("Channel", self.channel_id)
+        return self._client.cache.get("Channel", self.channel_id)
 
     @property
     def avatar_url(self):
@@ -116,7 +116,7 @@ class Webhook(Base):
             return self
 
         if use_token:
-            return self.__client.api.modify_webhook_with_token(
+            return self._client.api.modify_webhook_with_token(
                 self.id,
                 self.token,
                 name=name,
@@ -124,7 +124,7 @@ class Webhook(Base):
                 reason=reason
             )
         else:
-            return self.__client.api.modify_webhook(
+            return self._client.api.modify_webhook(
                 self.id,
                 name=name,
                 avatar=avatar.data_uri,
@@ -144,8 +144,8 @@ class Webhook(Base):
             The reason for deleting the webhook
         """
         if use_token:
-            self.__client.api.delete_webhook_with_token(self.id, self.token, reason)
+            self._client.api.delete_webhook_with_token(self.id, self.token, reason)
         else:
-            self.__client.api.delete_webhook(self.id, reason)
+            self._client.api.delete_webhook(self.id, reason)
 
     # TODO: Added method to execute the webhook, I guess

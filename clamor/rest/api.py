@@ -1,21 +1,27 @@
 import json
 from functools import wraps
-from typing import Union, Type, List, Optional
+from typing import List, Optional, Type, Union
 
-from clamor.models.audit_log import AuditLog, AuditLogAction
-from clamor.models.base import Base
-from clamor.models.channel import Channel
-from clamor.models.emoji import Emoji
-from clamor.models.guild import Ban, Integration, Guild, GuildEmbed, Member, Role
-from clamor.models.invite import Invite
-from clamor.models.message import Message
-from clamor.models.snowflake import Snowflake
-from clamor.models.user import Connection, User
-from clamor.models.voice import VoiceRegion
-from clamor.models.webhook import Webhook
-from clamor.utils.parse import parse_emoji, check_username, check_webhook_name
+from ..models.audit_log import AuditLog, AuditLogAction
+from ..models.base import Base
+from ..models.channel import Channel
+from ..models.emoji import Emoji
+from ..models.guild import Ban, Integration, Guild, GuildEmbed, Member, Role
+from ..models.invite import Invite
+from ..models.message import Message
+from ..models.snowflake import Snowflake
+from ..models.user import Connection, User
+from ..models.voice import VoiceRegion
+from ..models.webhook import Webhook
+from ..utils.parse import parse_react_emoji, check_username, check_webhook_name
 from .http import HTTP
 from .routes import Routes
+
+__all__ = (
+    'optional',
+    'cast_to',
+    'ClamorAPI',
+)
 
 
 def optional(**kwargs) -> dict:
@@ -39,22 +45,20 @@ def cast_to(model: Type[Base]):
                 return [model(r, self.client) for r in result]
             if isinstance(result, dict):
                 return model(result, self.client)
+
         return wrapper
     return func_wrap
 
 
 class ClamorAPI:
+    """A higher-level wrapper class around the Discord API endpoints."""
 
     def __init__(self, client, **kwargs):
-        self.client = client
-        self._http = kwargs
+        self._client = client
+        self._http = HTTP(client.token, **kwargs)
 
     @property
     def http(self) -> HTTP:
-        if isinstance(self._http, dict) and self.client.token is None:
-            raise AttributeError("Token has not been provided yet")
-        elif isinstance(self._http, dict):
-            self._http = HTTP(self.client.token, **self._http)
         return self._http
 
     @cast_to(AuditLog)
@@ -177,13 +181,13 @@ class ClamorAPI:
         return await self.http.make_request(Routes.CREATE_REACTION,
                                             dict(channel=channel_id,
                                                  message=message_id,
-                                                 emoji=parse_emoji(emoji)))
+                                                 emoji=parse_react_emoji(emoji)))
 
     async def delete_own_reaction(self, channel_id: Snowflake, message_id: Snowflake, emoji: str):
         return await self.http.make_request(Routes.DELETE_OWN_REACTION,
                                             dict(channel=channel_id,
                                                  message=message_id,
-                                                 emoji=parse_emoji(emoji)))
+                                                 emoji=parse_react_emoji(emoji)))
 
     async def delete_user_reaction(self,
                                    channel_id: Snowflake,
@@ -193,7 +197,7 @@ class ClamorAPI:
         return await self.http.make_request(Routes.DELETE_USER_REACTION,
                                             dict(channel=channel_id,
                                                  message=message_id,
-                                                 emoji=parse_emoji(emoji),
+                                                 emoji=parse_react_emoji(emoji),
                                                  user=user_id))
 
     @cast_to(User)
@@ -213,7 +217,7 @@ class ClamorAPI:
         return await self.http.make_request(Routes.GET_REACTIONS,
                                             dict(channel=channel_id,
                                                  message=message_id,
-                                                 emoji=parse_emoji(emoji)),
+                                                 emoji=parse_react_emoji(emoji)),
                                             params=params)
 
     async def delete_all_reactions(self, channel_id: Snowflake, message_id: Snowflake):

@@ -8,13 +8,17 @@ from typing import Optional, Union
 from asks.response_objects import Response
 
 __all__ = (
-    'JSONErrorCode',
     'ClamorError',
+    'EncodingFailed',
+    'Forbidden',
+    'GatewayCloseCode',
+    'GatewayError',
+    'Hierarchied',
+    'InvalidListener',
+    'JSONErrorCode',
+    'NotFound',
     'RequestFailed',
     'Unauthorized',
-    'Forbidden',
-    'NotFound',
-    'Hierarchied',
 )
 
 logger = logging.getLogger(__name__)
@@ -139,6 +143,48 @@ class JSONErrorCode(IntEnum):
 
     #: Resource overloaded.
     RESOURCE_OVERLOADED = 130000
+
+    @property
+    def name(self) -> str:
+        """Returns a human-readable version of the enum member's name."""
+
+        return ' '.join(part.capitalize() for part in self._name_.split('_'))
+
+
+class GatewayCloseCode(IntEnum):
+    """Enum that holds the possible WebSocket close codes for gateway."""
+
+    #: Connection was closed gracefully (or heartbeats timed out).
+    OK = 1000
+    #: Connection was closed due to CloudFlare load balancing.
+    LOAD_BALANCING_CLOSURE = 1001
+    #: Random server error.
+    RANDOM_SERVER_ERROR = 1006
+
+    #: Unknown error.
+    UNKNOWN_ERROR = 4000
+    #: An invalid opcode or an invalid payload for an opcode was sent.
+    UNKNOWN_OPCODE = 4001
+    #: Server failed to decode a payload.
+    DECODE_ERROR = 4002
+    #: A payload was sent prior to identifying.
+    NOT_AUTHENTICATED = 4003
+    #: The token in the identify payload was incorrect.
+    AUTHENTICATION_FAILED = 4004
+    #: More than one identify payload was sent.
+    ALREADY_AUTHENTICATED = 4005
+    #: Attempted to resume an invalid session. Now unused, Op 9 is sent instead.
+    INVALID_SESSION_RESUMED = 4006
+    #: An invalid sequence was used for resuming.
+    INVALID_SEQUENCE = 4007
+    #: We are being rate limited.
+    RATE_LIMITED = 4008
+    #: The session timed out.
+    SESSION_TIMEOUT = 4009
+    #: Invalid shard was sent in the identify payload.
+    INVALID_SHARD = 4010
+    #: Too many guilds were to be handled by a single connection.
+    SHARDING_REQUIRED = 4011
 
     @property
     def name(self) -> str:
@@ -290,4 +336,40 @@ class Hierarchied(ClamorError):
       a higher role than their own.
       *Even occurs if the bot has ``Kick/Ban Members`` permissions.*
     """
+    pass
+
+
+class GatewayError(ClamorError):
+    """Base class for every error raised by gateway components.
+
+    Catching this error is not recommended as it mostly
+    indicates a client or server panic.
+    """
+    pass
+
+
+class EncodingFailed(GatewayError):
+    """Raised when the encoding or decoding of a message fails.
+
+    Parameters
+    ----------
+    err : Optional[str]
+        Error message returned by the encoder
+    data : Optional[Union[dict, str]]
+        Raw data of the message
+    """
+
+    def __init__(self, err: Optional[str], data: Optional[Union[dict, str]] = None):
+        if data:
+            error = "Encoding of message {} failed".format(str(data))
+        else:
+            error = "Decoding of gateway message failed"
+        if error:
+            error += " with exception {}".format(err)
+
+        super().__init__(error)
+
+
+class InvalidListener(GatewayError):
+    """Raised by the emitter when a listener is not a coroutine."""
     pass

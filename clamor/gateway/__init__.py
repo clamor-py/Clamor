@@ -1,3 +1,4 @@
 from .connector import *
-from .exceptions import *
+from .encoding import *
 from .opcodes import *
+from .serialization import *

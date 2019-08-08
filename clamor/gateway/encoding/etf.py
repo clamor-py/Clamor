@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import earl
-
 from wsproto.frame_protocol import Opcode
 
 from .base import BaseEncoder
+
+__all__ = (
+    'ETFEncoder',
+)
 
 
 class ETFEncoder(BaseEncoder):

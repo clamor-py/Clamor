@@ -8,6 +8,7 @@ ENCODERS = {
 
 try:
     from .etf import ETFEncoder
-    ENCODERS['etf'] = ETFEncoder
 except ImportError:
     pass
+else:
+    ENCODERS['etf'] = ETFEncoder

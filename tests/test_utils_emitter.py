@@ -1,8 +1,7 @@
 import unittest
 
-from clamor import Emitter, Priority
-
 from anyio import run
+from clamor import Emitter, Priority
 
 
 class TestEmitter(unittest.TestCase):
@@ -12,22 +11,23 @@ class TestEmitter(unittest.TestCase):
             emitter = Emitter()
             goal = []
 
-            async def early(_):
+            async def early():
                 goal.append(1)
 
-            async def timely(_):
+            async def timely():
                 goal.append(2)
 
-            async def late(_):
+            async def lately():
                 goal.append(3)
 
             emitter.add_listener("test", early, Priority.BEFORE)
             emitter.add_listener("test", timely)
-            emitter.add_listener("test", late, Priority.AFTER)
+            emitter.add_listener("test", lately, Priority.AFTER)
             for _ in range(20):  # Make sure it wasn't an accident
-                await emitter.emit("test", {})
+                await emitter.emit("test")
                 self.assertEqual(goal, [1, 2, 3])
                 goal.clear()
+
         run(main)
 
     def test_removal(self):
@@ -35,20 +35,25 @@ class TestEmitter(unittest.TestCase):
             emitter = Emitter()
             goal = []
 
-            async def early(_):
+            async def early():
                 goal.append(1)
 
-            async def timely(_):
+            async def timely():
                 goal.append(2)
 
-            emitter.add_listener("test", early, Priority.BEFORE)
+            async def lately():
+                goal.append(3)
+
             emitter.add_listener("test", early, Priority.BEFORE)
             emitter.add_listener("test", timely)
-            await emitter.emit("test", {})
+            emitter.add_listener("test", lately, Priority.AFTER)
+            await emitter.emit("test")
             self.assertEqual(len(goal), 3)
             goal.clear()
             emitter.remove_listener("test", early)
-            await emitter.emit("test", {})
-            self.assertEqual(len(goal), 1)
+            await emitter.emit("test")
+            self.assertEqual(len(goal), 2)
             emitter.clear_event("test")
             self.assertFalse(emitter.listeners['test'])
+
+        run(main)

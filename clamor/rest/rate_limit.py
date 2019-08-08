@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import abc
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import NewType, Tuple, Union
@@ -8,6 +9,15 @@ from typing import NewType, Tuple, Union
 import anyio
 from async_generator import async_generator, asynccontextmanager, yield_
 from asks.response_objects import Response
+
+import base4
+import json
+
+try:
+    import redis
+    INCLUDE_REDIS = True
+except ModuleNotFoundError:
+    INCLUDE_REDIS = False
 
 __all__ = (
     'Bucket',
@@ -110,6 +120,98 @@ class CooldownBucket:
         return delay
 
 
+class BucketStore(abc.ABC):
+    """A bucket store to store buckets.
+
+    This class is used to store RateLimiting buckets.
+    This makes it possible to store buckets in other ways.
+    For example in Redis.
+
+    """
+
+    @abc.abstractmethod
+    def store_bucket(key: Bucket, value: CooldownBucket):
+        pass
+
+    @abc.abstractmethod
+    def get_bucket(bucket: Bucket) -> CooldownBucket:
+        pass
+
+    @abc.abstractmethod
+    def delete_bucket(bucket: Bucket):
+        pass
+
+    @abc.abstractmethod
+    def has_bucket(bucket: Bucket) -> bool:
+        pass
+
+    def __getitem__(self, bucket: Bucket) -> CooldownBucket:
+        return self.get_bucket(bucket)
+
+    def __setitem__(self, key: Bucket, value: CooldownBucket):
+        self.store_bucket(key, value)
+
+    def __delitem__(self, bucket: Bucket):
+        self.delete_bucket(bucket)
+
+    def __contains__(self, bucket: Bucket) -> bool:
+        return self.has_bucket(bucket)
+
+
+class InMemoryBucketStore(BucketStore):
+    """A BucketStore which stores the bucket in-memory via a dict
+
+    This bucket store is the default store which will be used by the
+    RateLimiter to store buckets.
+
+    """
+
+    def __init__(self):
+        self._buckets = {}
+
+    def store_bucket(self, key: Bucket, value: CooldownBucket):
+        self._buckets[key] = value
+
+    def get_bucket(self, bucket: Bucket) -> CooldownBucket:
+        return self._buckets[bucket]
+
+    def delete_bucket(self, bucket: Bucket):
+        del self._buckets[bucket]
+
+    def has_bucket(self, bucket: Bucket) -> bool:
+        return bucket in self._buckets
+
+
+if INCLUDE_REDIS:
+    class RedisBucketStore(BucketStore):
+        """A bucket store which stores the bucket in a redis database.
+
+        This class is only available if you have [redis-py](https://pypi.org/project/redis/)
+        installed.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Look at the [redis-py](https://pypi.org/project/redis/)
+            documentation to see all Keyowrd arguments
+        """
+
+        def __init__(self, **kwargs):
+            self.redis_client = redis.Redis(**kwargs)
+
+        def store_bucket(self, key: Bucket, value: CooldownBucket):
+            pass
+
+        def get_bucket(self, bucket: Bucket) -> CooldownBucket:
+            pass
+
+        def delete_bucket(self, bucket: Bucket):
+            pass
+
+        def has_bucket(self, bucket: Bucket) -> bool:
+            pass
+
+
 class RateLimiter:
     """A rate limiter to keep track of per-bucket rate limits.
 
@@ -119,7 +221,8 @@ class RateLimiter:
     can be used for that. It can also be used as an async
     contextmanager.
 
-    Buckets are stored in a dictionary as literal bucket and
+    Buckets are stored in the bucket store passed in the constructor.
+    If no bucket store is specified, the buckets are stored in memory.
     :class:`~clamor.rest.rate_limit.CooldownBucket` objects.
 
     .. code-block:: python3
@@ -163,8 +266,8 @@ class RateLimiter:
         Separate lock for global rate limits.
     """
 
-    def __init__(self):
-        self._buckets = {}
+    def __init__(self, bucket_store=None):
+        self._buckets = bucket_store or InMemoryBucketStore()
         self.global_lock = anyio.create_lock()
 
     @asynccontextmanager

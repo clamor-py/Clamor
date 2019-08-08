@@ -12,7 +12,7 @@ from asks.response_objects import Response
 
 from ..exceptions import RequestFailed, Unauthorized, Forbidden, NotFound
 from ..meta import __url__ as clamor_url, __version__ as clamor_version
-from .rate_limit import Bucket, RateLimiter
+from .rate_limit import Bucket, RateLimiter, InMemoryBucketStore
 from .routes import APIRoute
 
 __all__ = (
@@ -47,6 +47,9 @@ class HTTP:
     app : str
         The application type for the ``Authorization`` header.
         Either ``Bot`` or ``Bearer``, defaults to ``Bot``.
+    bucket_store: :class:`~clamor.rest.rate_limit.BucketStore`
+        The bucket store which will be used by the RateLimiter.
+        If no bucket store is provided, the RateLimiter will store the buckets in memory.
 
     Attributes
     ----------
@@ -71,7 +74,7 @@ class HTTP:
     def __init__(self, token: str, **kwargs):
         self._token = token
         self._session = kwargs.get('session', asks.Session())
-        self.rate_limiter = RateLimiter()
+        self.rate_limiter = RateLimiter(kwargs.get('bucket_store'))
 
         self._responses = []
         self.headers = {
@@ -99,15 +102,17 @@ class HTTP:
         return self._responses
 
     @staticmethod
-    def _parse_response(response: Response) -> Optional[Union[dict, list, str]]:
+    def _parse_response(response: Response) -> Optional[Union[dict, list, str, bytes]]:
         if response.headers['Content-Type'] == 'application/json':
             return response.json(encoding='utf-8')
+        if response.headers['Content-Type'].startswith("image"):
+            return response.content
         return response.text.encode('utf-8')
 
     async def make_request(self,
                            route: APIRoute,
                            fmt: dict = None,
-                           **kwargs) -> Optional[Union[dict, list, str]]:
+                           **kwargs) -> Optional[Union[dict, list, str, bytes]]:
         r"""Makes a request to a given route with a set of arguments.
 
         It also handles rate limits, non-success status codes and
@@ -204,7 +209,7 @@ class HTTP:
 
     async def parse_response(self,
                              bucket: Bucket,
-                             response: Response) -> Optional[Union[dict, list, str]]:
+                             response: Response) -> Optional[Union[dict, list, str, bytes]]:
         """Parses a given response and handles non-success status codes.
 
         Parameters

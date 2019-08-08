@@ -6,7 +6,7 @@ from inspect import iscoroutinefunction
 from functools import wraps
 from typing import Any, Callable, Coroutine
 
-from clamor.exceptions import InvalidListener
+from ..exceptions import InvalidListener
 
 from anyio import create_task_group
 

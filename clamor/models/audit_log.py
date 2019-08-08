@@ -1,6 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from enum import IntEnum
 
 from .base import Base
+
+__all__ = (
+    'AuditLog',
+    'AuditLogAction',
+)
 
 
 class AuditLogAction(IntEnum):

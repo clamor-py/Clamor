@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from collections import deque
 from typing import Callable
 from weakref import WeakValueDictionary
@@ -39,16 +41,23 @@ class Cache:
     def __init__(self, client):
         self.client = client
         self.categories = {
-            "Guild": CacheCategory(self.MAX_CACHE,
+            'Guild': CacheCategory(self.MAX_CACHE,
                                    self.client.api.get_guild,
-                                   "id"),
-            "Webhook": CacheCategory(self.MAX_CACHE,
+                                   'id'),
+            'Webhook': CacheCategory(self.MAX_CACHE,
                                      self.client.api.get_webhook,
-                                     "id"),
-            "Channel": CacheCategory(self.MAX_CACHE,
+                                     'id'),
+            'Channel': CacheCategory(self.MAX_CACHE,
                                      self.client.api.get_channel,
-                                     "id")
+                                     'id'),
+            'User': CacheCategory(self.MAX_CACHE,
+                                  self.client.api.get_user,
+                                  'id')
         }
+
+    def add(self, model: Base, category: str):
+        # TODO: Deal with categories that don't exist.
+        self.categories[category].add_active(model)
 
     def get(self, category: str, *ids: int):
         return self.categories[category].get(*ids)

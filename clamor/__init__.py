@@ -12,8 +12,9 @@ The Python Discord API Framework.
 
 from .gateway import *
 from .meta import *
+from .models import *
 from .rest import *
-from .utils import *
+from . import utils  # Preserve the namespace
 
 import logging
 

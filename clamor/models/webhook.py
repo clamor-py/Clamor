@@ -1,12 +1,15 @@
-from clamor.utils.files import File
+from ..utils.files import File
 from .base import Base, Field, Snowflakable, snowflakify
 from .snowflake import Snowflake
 from .user import User, AVATAR_URL
 
+__all__ = (
+    'Webhook',
+)
+
 
 class Webhook(Base):
-    """
-    A model to represent discord's webhooks
+    """A model to represent Webhooks on Discord.
 
     Webhooks are easy mode bots, as discord puts it. This model allows you to examine and iteract
     with them. Some methods allow you to use the webhook's token, instead of needing permissions.
@@ -45,11 +48,11 @@ class Webhook(Base):
 
     @property
     def guild(self):
-        return self.client.cache.get("Guild", self.guild_id)
+        return self.__client.cache.get("Guild", self.guild_id)
 
     @property
     def channel(self):
-        return self.client.cache.get("Channel", self.channel_id)
+        return self.__client.cache.get("Channel", self.channel_id)
 
     @property
     def avatar_url(self):
@@ -113,7 +116,7 @@ class Webhook(Base):
             return self
 
         if use_token:
-            return self.client.api.modify_webhook_with_token(
+            return self.__client.api.modify_webhook_with_token(
                 self.id,
                 self.token,
                 name=name,
@@ -121,7 +124,7 @@ class Webhook(Base):
                 reason=reason
             )
         else:
-            return self.client.api.modify_webhook(
+            return self.__client.api.modify_webhook(
                 self.id,
                 name=name,
                 avatar=avatar.data_uri,
@@ -141,8 +144,8 @@ class Webhook(Base):
             The reason for deleting the webhook
         """
         if use_token:
-            self.client.api.delete_webhook_with_token(self.id, self.token, reason)
+            self.__client.api.delete_webhook_with_token(self.id, self.token, reason)
         else:
-            self.client.api.delete_webhook(self.id, reason)
+            self.__client.api.delete_webhook(self.id, reason)
 
     # TODO: Added method to execute the webhook, I guess

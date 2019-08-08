@@ -1,7 +1,19 @@
+# -*- coding: utf-8 -*-
+
 from enum import Enum
 from typing import Any, Callable, Dict, Type, Tuple, Union
 
 from .snowflake import Snowflake
+
+__all__ = (
+    'Base',
+    'BaseMeta',
+    'Field',
+    'Flags',
+    'Snowflakable',
+    'Snowflake',
+    'snowflakify',
+)
 
 
 class Field:
@@ -26,32 +38,28 @@ class Field:
 
 
 class BaseMeta(type):
-
     def __new__(mcs, name: str, bases: Tuple[Type[Any]], clsattrs: Dict[str, Any]):
-        for name, field in clsattrs.items():
+        for name_, field in clsattrs.items():
             if isinstance(field, Field):
-                field.set_name(name)
+                field.set_name(name_)
         return super().__new__(mcs, name, bases, clsattrs)
 
 
 class Base(metaclass=BaseMeta):
-
     def __init__(self, source: Dict[str, Any], client):
-        self.name_ = self.__class__.__name__
-        self.source = source
-        self.client = client
+        self.__source = source
+        self.__client = client
         if self.id is not None:
-            self.client.cache.active[self.__class__.__name__][self.id] = self
+            self.__client.cache.add(self, self.__class__.__name__)
 
-    def __getattr__(self, item: str):
+    def __getattribute__(self, item: str):
         value = super().__getattribute__(item)
         if isinstance(value, Field):
-            return value(self.source[value.alt or item])
+            return value(self.__source[value.alt or item])
         return value
 
 
 class Flags(Enum):
-
     @classmethod
     def get(cls, flags: int):
         return tuple(a for a in cls if flags & a.value)
@@ -60,7 +68,7 @@ class Flags(Enum):
 Snowflakable = Union[str, int, Base]
 
 
-def snowflakify(obj: Snowflakable):
+def snowflakify(obj: Snowflakable) -> Snowflake:
     if isinstance(obj, Base):
         return obj.id
     return Snowflake(obj)

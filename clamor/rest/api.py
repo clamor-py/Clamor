@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 from functools import wraps
 from typing import List, Optional, Type, Union
@@ -42,9 +44,9 @@ def cast_to(model: Type[Base]):
         async def wrapper(self, *args, **kwargs):
             result = await func(self, *args, **kwargs)
             if isinstance(result, list):
-                return [model(r, self.client) for r in result]
+                return [model(r, self._client) for r in result]
             if isinstance(result, dict):
-                return model(result, self.client)
+                return model(result, self._client)
 
         return wrapper
     return func_wrap
@@ -55,10 +57,15 @@ class ClamorAPI:
 
     def __init__(self, client, **kwargs):
         self._client = client
-        self._http = HTTP(client.token, **kwargs)
+        self._http = kwargs
 
     @property
     def http(self) -> HTTP:
+        if not self._client.token:
+            raise AttributeError('Token hasn\'t been provided yet.')
+        elif isinstance(self._http, dict):
+            self._http = HTTP(self._client.token, **self._http)
+
         return self._http
 
     @cast_to(AuditLog)

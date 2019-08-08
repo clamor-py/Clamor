@@ -1,4 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
+
+__all__ = (
+    'Snowflake',
+)
 
 
 class Snowflake(int):
@@ -8,13 +14,14 @@ class Snowflake(int):
     """
     An object to represent a discord snowflake
     
-    Keep in mind, that this is just a normal int with some added properties. This is the only object that doesn't
-    inherit from :py:class:`~pycord.models.base.Model`. For the most part, you can just treat this like a normal int.
+    Keep in mind, that this is just a normal int with some added properties.
+    This is the only object that doesn't inherit from :class:`~clamor.models.base.Model`.
+    For the most part, you can just treat this like a normal int.
     
     Attributes
     ----------
     increment : int
-        "For every ID that is generated on that process, this number is incremented" ~ discord docs
+        "For every ID that is generated on that process, this number is incremented" ~ Discord docs
     internal_process_id : int
         Undocumented, but supposedly the ID of the process that made the snowflake
     internal_worker_id : int

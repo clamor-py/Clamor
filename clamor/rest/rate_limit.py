@@ -10,9 +10,6 @@ import anyio
 from async_generator import async_generator, asynccontextmanager, yield_
 from asks.response_objects import Response
 
-import base4
-import json
-
 try:
     import redis
     INCLUDE_REDIS = True
@@ -126,23 +123,22 @@ class BucketStore(abc.ABC):
     This class is used to store RateLimiting buckets.
     This makes it possible to store buckets in other ways.
     For example in Redis.
-
     """
 
     @abc.abstractmethod
-    def store_bucket(key: Bucket, value: CooldownBucket):
+    def store_bucket(self, key: Bucket, value: CooldownBucket):
         pass
 
     @abc.abstractmethod
-    def get_bucket(bucket: Bucket) -> CooldownBucket:
+    def get_bucket(self, bucket: Bucket) -> CooldownBucket:
         pass
 
     @abc.abstractmethod
-    def delete_bucket(bucket: Bucket):
+    def delete_bucket(self, bucket: Bucket):
         pass
 
     @abc.abstractmethod
-    def has_bucket(bucket: Bucket) -> bool:
+    def has_bucket(self, bucket: Bucket) -> bool:
         pass
 
     def __getitem__(self, bucket: Bucket) -> CooldownBucket:

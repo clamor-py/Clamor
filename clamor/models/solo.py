@@ -15,7 +15,8 @@ __all__ = (
     "ChannelTypes",
     "MessageFlags",
     "MessageActivities",
-    "MessageApplication"
+    "MessageApplication",
+    "MessageReference"
 )
 
 

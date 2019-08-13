@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from inspect import isclass
 from typing import Any, Callable, Dict, List, Type, Tuple, Union
 
 from .snowflake import Snowflake
@@ -38,32 +39,38 @@ class Field:
             raise AttributeError("Name was already set, can not be set again.")
         self._name = name
 
-    def __call__(self, value: Any):
+    def __call__(self, client, value: Any):
         if value is None:
             return [] if self.array else None
 
+        castor = lambda x: self.type(x, client) if \
+            isclass(self.type) and issubclass(self.type, Base) else self.type
+
         if self.array:
-            return [v if isinstance(v, self.type) else self.type(value) for v in value]
+            return [v if isinstance(v, self.type) else castor(value) for v in value]
         else:
             if not isinstance(value, self.type):
-                return self.type(value)
+                return castor(value)
             return value
 
 
 class BaseMeta(type):
 
     def __new__(mcs, name: str, bases: Tuple[Type[Any]], clsattrs: Dict[str, Any]):
+        fields = []
         for name_, field in clsattrs.items():
             if isinstance(field, Field):
                 field.set_name(name_)
+                fields.append(name_)
         clsattrs["name_"] = name
+        clsattrs["fields_"] = frozenset(fields)
         return super().__new__(mcs, name, bases, clsattrs)
 
 
 class Base(metaclass=BaseMeta):
 
-    def __init__(self, source: Dict[str, Any], client):
-        self._source = source
+    def __init__(self, source: Dict[str, Any] = None, client = None):
+        self._source = source or {}
         self._client = client
         if self.id is not None:
             self._client.cache.add(self)
@@ -71,10 +78,18 @@ class Base(metaclass=BaseMeta):
     def __getattribute__(self, item: str):
         value = super().__getattribute__(item)
         if isinstance(value, Field):
-            if isinstance(value, GenerativeField):
-                return value(self._client.cache, self._source[value.alt or item])
-            return value(self._source[value.alt or item])
+            return value(self._client, self._source[value.alt or item])
         return value
+
+    def __setattr__(self, key: str, value: Any):
+        if key in self.fields_:
+            if getattr(self, key).array:
+                self._source[key] = [
+                    v._source if hasattr(v, "_source") else v for v in value
+                ]
+            else:
+                self._source[key] = value._source if hasattr(value, "_source") else value
+        super().__setattr__(key, value)
 
 
 class Flags(Enum):
@@ -111,6 +126,6 @@ def timestamp(data):
 
 class GenerativeField(Field):
 
-    def __call__(self, cache, values: List[Snowflake]):
+    def __call__(self, client, values: List[Snowflake]):
         for value in values:
-            yield cache.get(self.type.__name__, value)
+            yield client.cache.get(self.type.__name__, value)

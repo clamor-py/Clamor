@@ -9,7 +9,12 @@ __all__ = (
 
 
 class Emoji(Base):
-    pass
+
+    @property
+    def string(self):
+        if self.id:
+            return "{}:{}".format(self.name, self.id)
+        return self.name
 
 
 class Reaction(Base):

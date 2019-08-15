@@ -16,7 +16,8 @@ __all__ = (
     "MessageFlags",
     "MessageActivities",
     "MessageApplication",
-    "MessageReference"
+    "MessageReference",
+    "TargetUserType"
 )
 
 
@@ -140,3 +141,7 @@ class MessageReference(Base):
     @property
     def guild(self):
         return self._client.cache.get("Guild", self.guild_id)
+
+
+class TargetUserType(Enum):
+    STREAM = 1

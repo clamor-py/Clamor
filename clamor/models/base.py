@@ -15,7 +15,7 @@ __all__ = (
     'Snowflakable',
     'Snowflake',
     'snowflakify',
-    'datetime',
+    'timestamp',
     'GenerativeField'
 )
 

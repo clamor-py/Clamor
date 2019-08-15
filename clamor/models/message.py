@@ -4,6 +4,7 @@ from typing import List, Union
 
 from clamor.utils.files import File
 from .base import Base, Field, datetime, GenerativeField, snowflakify
+from .base import timestamp as discord_timestamp
 from .emoji import Reaction, Emoji
 from .guild import Member, Role
 from .snowflake import Snowflake
@@ -404,8 +405,8 @@ class Message(Base):
     author = Field(User)  # type: User
     member = Field(Member)  # type: Member
     content = Field(str)  # type: str
-    timestamp = Field(datetime)  # type: datetime
-    edited_timestamp = Field(datetime)  # type: datetime
+    timestamp = Field(discord_timestamp)  # type: datetime
+    edited_timestamp = Field(discord_timestamp)  # type: datetime
     tts = Field(bool)  # type: bool
     mention_everyone = Field(bool)  # type: bool
     mentions = Field(MentionUser, array=True)  # type: List[MentionUser]

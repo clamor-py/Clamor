@@ -9,7 +9,7 @@ from ..models.base import Base
 from ..models.channel import Channel
 from ..models.emoji import Emoji
 from ..models.guild import Ban, Integration, Guild, GuildEmbed, Member, Role
-from ..models.invite import Invite
+from ..models.invite import PartialInvite, FullInvite
 from ..models.message import Message
 from ..models.snowflake import Snowflake
 from ..models.user import Connection, User
@@ -285,19 +285,19 @@ class ClamorAPI:
                                             json=params,
                                             reason=reason)
 
-    @cast_to(Invite)
-    async def get_channel_invites(self, channel_id: Snowflake) -> List[Snowflake]:
+    @cast_to(FullInvite)
+    async def get_channel_invites(self, channel_id: Snowflake) -> List[FullInvite]:
         return await self.http.make_request(Routes.GET_CHANNEL_INVITES,
                                             dict(channel=channel_id))
 
-    @cast_to(Invite)
+    @cast_to(PartialInvite)
     async def create_channel_invite(self,
                                     channel_id: Snowflake,
                                     max_age: int = 86400,
                                     max_uses: int = 0,
                                     temporary: bool = False,
                                     unique: bool = False,
-                                    reason: str = None) -> dict:
+                                    reason: str = None) -> PartialInvite:
         params = optional(**{
             'max_age': max_age,
             'max_uses': max_uses,
@@ -739,8 +739,8 @@ class ClamorAPI:
         return await self.http.make_request(Routes.GET_GUILD_VOICE_REGIONS,
                                             dict(guild=guild_id))
 
-    @cast_to(Invite)
-    async def get_guild_invites(self, guild_id: Snowflake) -> List[Invite]:
+    @cast_to(FullInvite)
+    async def get_guild_invites(self, guild_id: Snowflake) -> List[FullInvite]:
         return await self.http.make_request(Routes.GET_GUILD_INVITES,
                                             dict(guild=guild_id))
 
@@ -817,14 +817,14 @@ class ClamorAPI:
         return await self.http.make_request(Routes.GET_GUILD_VANITY_URL,
                                             dict(guild=guild_id))
 
-    @cast_to(Invite)
-    async def get_invite(self, invite_code: str, with_counts: bool = False) -> Invite:
+    @cast_to(PartialInvite)
+    async def get_invite(self, invite_code: str, with_counts: bool = False) -> PartialInvite:
         return await self.http.make_request(Routes.GET_INVITE,
                                             dict(invite=invite_code),
                                             params=optional(**{'with_counts': with_counts}))
 
-    @cast_to(Invite)
-    async def delete_invite(self, invite_code: str, reason: str = None) -> Invite:
+    @cast_to(PartialInvite)
+    async def delete_invite(self, invite_code: str, reason: str = None) -> PartialInvite:
         return await self.http.make_request(Routes.DELETE_INVITE,
                                             dict(invite=invite_code),
                                             reason=reason)

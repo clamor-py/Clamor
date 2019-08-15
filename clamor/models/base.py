@@ -28,7 +28,7 @@ TIMESTAMP_FORMATS = [
 
 class Field:
 
-    def __init__(self, typ: Callable, alt: str = None, array: bool = False):
+    def __init__(self, typ: Union[Callable, str], alt: str = None, array: bool = False):
         self.type = typ
         self.alt = alt
         self._name = None
@@ -128,4 +128,5 @@ class GenerativeField(Field):
 
     def __call__(self, client, values: List[Snowflake]):
         for value in values:
-            yield client.cache.get(self.type.__name__, value)
+            yield client.cache.get(self.type if isinstance(self.type, str) else
+                                   self.type.__name__, value)

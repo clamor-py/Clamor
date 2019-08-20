@@ -12,7 +12,8 @@ __all__ = (
 
 
 def identify(token: str, compress: bool = True, large_threshold: int = 50,
-             *, shard: List[int] = None, presence: dict = None) -> dict:
+             *, shard: List[int] = None, presence: dict = None,
+             guild_subscriptions: bool = True) -> dict:
     """Returns an identify payload to complete the client handshake."""
 
     presence = presence or {'since': None, 'game': None, 'status': 'online', 'afk': False}
@@ -28,7 +29,8 @@ def identify(token: str, compress: bool = True, large_threshold: int = 50,
         'compress': compress,
         'large_threshold': large_threshold,
         'shard': shard,
-        'presence': presence
+        'presence': presence,
+        'guild_subscriptions': guild_subscriptions
     }
 
 
